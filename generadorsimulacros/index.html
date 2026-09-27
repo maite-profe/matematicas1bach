@@ -192,7 +192,7 @@ document.getElementById("status").textContent="Selecciona al menos un contenido.
 return}
 actual={};ids.forEach(function(id){actual[id]=pick(id)});seq++;
 var time=duration(),date=new Intl.DateTimeFormat("es-ES",{timeZone:"Europe/Madrid",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date());
-var logo=document.getElementById('brand-logo').src;var header='<div class="paper-brand"><img src="'+logo+'" alt="Colegio Punta Galea"><span>MATEMÁTICAS · 1.º BACHILLERATO<br>PRIMERA EVALUACIÓN</span></div><header class="exam-top"><div class="eyebrow">EXAMEN DE SEGUIMIENTO · PRIMERA EVALUACIÓN</div><h2>SIMULACRO DE MATEMÁTICAS</h2><div class="sub">Tiempo estimado: '+time+' minutos</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: '+date+'</span></div>';
+var logo=document.getElementById('brand-logo').src;var header='<div class="paper-brand"><img src="'+logo+'" alt="Colegio Punta Galea"><span>MATEMÁTICAS · 1.º BACHILLERATO<br>PRIMERA EVALUACIÓN</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>SIMULACRO DE MATEMÁTICAS</h2><div class="sub">Tiempo estimado: '+time+' minutos</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: '+date+'</span></div>';
 var cover='<div class="coverage"><b>Contenidos:</b> '+sections.map(function(s){return '<span class="'+(selected[s.id]?"":"off")+'">'+(selected[s.id]?"✓":"✕")+' '+s.label+'</span>'}).join(" · ")+"</div>";
 var body="",sol="",num=0;
 var eqs=sections.filter(function(s){return s.group==="ecuaciones"&&selected[s.id]});
