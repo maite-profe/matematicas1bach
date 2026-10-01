@@ -143,6 +143,426 @@ problem:[
 {q:"Halla dos números cuya suma de inversos es 0,7 y cuya diferencia dividida entre 3 es 1.",s:"x−y=3 y 1/x+1/y=7/10, con x,y≠0. Sustituyendo y=x−3: 7x²−41x+30=0. x=5 o x=6/7; las parejas son (5,2) y (6/7,−15/7)."}
 ]
 };
+// Banco ampliado: se conservan los problemas que se reducen a lineales,
+// pero no participan en la categoría de sistemas no lineales.
+var originalProblemNumbers=[2,4,5,10,17,19,22,50,59,66,67];
+pool.problem.forEach(function(p,i){p.id="PNL-"+String(originalProblemNumbers[i]).padStart(2,"0");p.sourceNumber=originalProblemNumbers[i];p.nonlinear=p.sourceNumber!==10&&p.sourceNumber!==50;p.source="Raúl González Medina · Intergranada · febrero de 2023";});
+pool.problem[0].s="Sean x e y los números: x+y=23 y xy=130. Sustituyendo y=23−x: x²−23x+130=(x−10)(x−13)=0. Los números son 10 y 13.";
+pool.problem[1].s="Sean n el número inicial de amigos y p lo que pagaba inicialmente cada uno: np=490 y (n+2)(p−28)=490. Restando: 2p−28n−56=0, luego p=14n+28. Sustituyendo: n²+2n−35=(n−5)(n+7)=0. Descartamos n=−7. Al principio eran 5 y pagaban 98 €; finalmente viajan 7 y pagan 70 € cada uno.";
+pool.problem[4].s="Sean v la velocidad de ida y t su duración: vt=300 y (v+10)(t−1)=300. Restando: v=10t−10. Sustituyendo: t²−t−30=(t−6)(t+5)=0. Como t>1, t=6 h y v=50 km/h. La vuelta dura 5 h a 60 km/h.";
+var newProblems=[
+  {
+    "id": "PNL-07",
+    "sourceNumber": 7,
+    "type": "Compras y reparto de costes",
+    "q": "Un comerciante quiere obtener 60.000 € por todos los ordenadores de su almacén. Se estropean dos y vende cada uno de los restantes 50 € más caro para obtener la misma cantidad. ¿Cuántos ordenadores tenía inicialmente y a qué precio vendió los que quedaban?",
+    "s": "Sean n el número inicial de ordenadores y p su precio previsto: np=60.000 y (n−2)(p+50)=60.000. Al restar, 50n−2p−100=0, luego p=25n−50. Sustituimos: n²−2n−2400=(n−50)(n+48)=0. Descartamos n=−48. Tenía 50 ordenadores; el precio previsto era 1.200 € y vendió los 48 restantes a 1.250 € cada uno.",
+    "system": [
+      "np=60000",
+      "(n−2)(p+50)=60000"
+    ],
+    "solutions": [
+      [
+        50,
+        1200
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-11",
+    "sourceNumber": 11,
+    "type": "Geometría: rombo",
+    "q": "Un rombo tiene lados de 5 cm y un área de 24 cm². Calcula sus diagonales.",
+    "s": "Sean D y d las diagonales positivas: Dd=48 y D²+d²=100, por el área y el teorema de Pitágoras aplicado a sus semidiagonales. Entonces (D+d)²=100+96=196, luego D+d=14. Las raíces de t²−14t+48=(t−6)(t−8) son 6 y 8. Las diagonales miden 6 cm y 8 cm.",
+    "system": [
+      "Dd=48",
+      "D²+d²=100"
+    ],
+    "solutions": [
+      [
+        8,
+        6
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-12",
+    "sourceNumber": 12,
+    "type": "Geometría: cono",
+    "q": "Un cono tiene una altura de 15 cm y un área lateral de 136π cm². Calcula el radio y la generatriz.",
+    "s": "Sean r el radio y g la generatriz: rg=136 y g²=r²+225, con r,g>0. Sustituimos g=136/r y ponemos z=r²: z²+225z−18496=(z−64)(z+289)=0. Descartamos z=−289. Por tanto r=8 cm y g=136/8=17 cm.",
+    "system": [
+      "rg=136",
+      "g²=r²+225"
+    ],
+    "solutions": [
+      [
+        8,
+        17
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-26",
+    "sourceNumber": 26,
+    "type": "Números: diferencia y suma de cuadrados",
+    "q": "La suma de los cuadrados de dos números positivos es 89 y el mayor supera al menor en 3. Halla los números.",
+    "s": "Sean x el mayor e y el menor: x−y=3 y x²+y²=89. Sustituyendo y=x−3 obtenemos x²−3x−40=(x−8)(x+5)=0. Como son positivos, x=8 e y=5.",
+    "system": [
+      "x−y=3",
+      "x²+y²=89"
+    ],
+    "solutions": [
+      [
+        8,
+        5
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-32",
+    "sourceNumber": 32,
+    "type": "Números: producto de expresiones",
+    "q": "Dos números enteros positivos suman 36. El producto del primero aumentado en 3 por el segundo aumentado en 2 es 408. ¿Cuáles son?",
+    "s": "Sean x el primero e y el segundo: x+y=36 y (x+3)(y+2)=408. Sustituyendo y=36−x: x²−35x+294=(x−14)(x−21)=0. Hay dos parejas ordenadas: (x,y)=(14,22) y (21,15). Ambas cumplen las condiciones.",
+    "system": [
+      "x+y=36",
+      "(x+3)(y+2)=408"
+    ],
+    "solutions": [
+      [
+        14,
+        22
+      ],
+      [
+        21,
+        15
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-35",
+    "sourceNumber": 35,
+    "type": "Geometría: áreas de dos cuadrados",
+    "q": "Las áreas de dos cuadrados suman 100 dm² y la mayor supera a la menor en 28 dm². Calcula los lados de los cuadrados.",
+    "s": "Sean x e y los lados, con x>y>0: x²+y²=100 y x²−y²=28. Sumando las ecuaciones: 2x²=128, de donde x=8 dm. Entonces y²=36 y y=6 dm. Se descartan los valores negativos porque son longitudes.",
+    "system": [
+      "x²+y²=100",
+      "x²−y²=28"
+    ],
+    "solutions": [
+      [
+        8,
+        6
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-44",
+    "sourceNumber": 44,
+    "type": "Edades",
+    "q": "La edad actual de una madre es el cuadrado de la edad de su hija. Dentro de nueve años, la madre tendrá el triple de la edad de su hija. ¿Cuántos años tienen ahora?",
+    "s": "Sean m e h las edades: m=h² y m+9=3(h+9). Sustituyendo: h²−3h−18=(h−6)(h+3)=0. Descartamos h=−3. La hija tiene 6 años y la madre 36 años.",
+    "system": [
+      "m=h²",
+      "m+9=3(h+9)"
+    ],
+    "solutions": [
+      [
+        36,
+        6
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-45",
+    "sourceNumber": 45,
+    "type": "Fracciones y sistemas racionales",
+    "q": "Una fracción mantiene su valor al sumar 15 a su numerador y 18 a su denominador. Su valor se triplica si se suman 55 al numerador y 6 al denominador. Halla el numerador y el denominador originales.",
+    "s": "Sean a y b el numerador y el denominador: (a+15)/(b+18)=a/b y (a+55)/(b+6)=3a/b, con b≠0,−18,−6. La primera igualdad da 15b=18a, luego b=6a/5. En la segunda obtenemos 2a²−40a=0. a=0 llevaría a b=0 y no es válido. Por tanto a=20 y b=24. La fracción original es 20/24; su valor simplificado es 5/6.",
+    "system": [
+      "(a+15)/(b+18)=a/b",
+      "(a+55)/(b+6)=3a/b"
+    ],
+    "solutions": [
+      [
+        20,
+        24
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-48",
+    "sourceNumber": 48,
+    "type": "Cifras de un número: sistema racional",
+    "q": "Un número de dos cifras, dividido por el producto de sus cifras, da 3/2. El número obtenido al intercambiar sus cifras supera al original en 36. ¿Cuál es el número?",
+    "s": "Sean a la cifra de las decenas y b la de las unidades, ambas distintas de cero: 2(10a+b)=3ab y 10b+a−(10a+b)=36. La segunda da b=a+4. Sustituyendo: 3a²−10a−8=(3a+2)(a−4)=0. Solo a=4 es una cifra válida; b=8. El número es 48.",
+    "system": [
+      "2(10a+b)=3ab",
+      "10b+a−(10a+b)=36"
+    ],
+    "solutions": [
+      [
+        4,
+        8
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-51",
+    "sourceNumber": 51,
+    "type": "Geometría: jardín junto a una pared",
+    "q": "Se construye un jardín rectangular de 108 m² junto a una pared que cierra uno de sus lados. Para cerrar los otros tres lados se utilizan 30 m de valla. Halla todas las dimensiones posibles.",
+    "s": "Sean x el lado perpendicular a la pared e y el paralelo: xy=108 y 2x+y=30, con x,y>0. Sustituyendo y=30−2x: x²−15x+54=(x−6)(x−9)=0. Las dos posibilidades son x=6 m, y=18 m, o x=9 m, y=12 m.",
+    "system": [
+      "xy=108",
+      "2x+y=30"
+    ],
+    "solutions": [
+      [
+        6,
+        18
+      ],
+      [
+        9,
+        12
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-54",
+    "sourceNumber": 54,
+    "type": "Geometría: catetos, área y altura",
+    "q": "Un triángulo rectángulo tiene un área de 150 cm² y la altura sobre la hipotenusa mide 12 cm. Calcula sus catetos.",
+    "s": "La hipotenusa c cumple c·12/2=150, luego c=25 cm. Sean x e y los catetos: xy=300 y x²+y²=625. Como son positivos, (x+y)²=625+600=1225 da x+y=35. Las raíces de t²−35t+300=(t−15)(t−20) son 15 y 20. Los catetos miden 15 cm y 20 cm.",
+    "system": [
+      "xy=300",
+      "x²+y²=625"
+    ],
+    "solutions": [
+      [
+        15,
+        20
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-56",
+    "sourceNumber": 56,
+    "type": "Geometría: trapecio",
+    "q": "Las bases de un trapecio miden 15 cm y 36 cm, y sus lados no paralelos miden 13 cm y 20 cm. Calcula su altura.",
+    "s": "Al trazar las alturas, la diferencia de las bases es 21 cm. Sea x la proyección horizontal del lado de 13 cm y h la altura. El sistema es x²+h²=169 y (21−x)²+h²=400. Restando: 441−42x=231, luego x=5. Entonces h²=169−25=144. Como h>0, la altura es 12 cm.",
+    "system": [
+      "x²+h²=169",
+      "(21−x)²+h²=400"
+    ],
+    "solutions": [
+      [
+        5,
+        12
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-58",
+    "sourceNumber": 58,
+    "type": "Geometría: rombo con diagonales proporcionales",
+    "q": "La suma del perímetro de un rombo y de sus dos diagonales es 68 cm. Sus diagonales están en la proporción 3:4. Calcula su área.",
+    "s": "Sean D y d las diagonales: D/d=3/4 y 2√(D²+d²)+D+d=68. Escribimos D=3t y d=4t, con t>0. El lado del rombo mide 5t/2, así que el perímetro es 10t. Resulta 10t+3t+4t=68, de donde t=4. Las diagonales miden 12 y 16 cm; el área es 12·16/2=96 cm².",
+    "system": [
+      "D/d=3/4",
+      "2√(D²+d²)+D+d=68"
+    ],
+    "solutions": [
+      [
+        12,
+        16
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-60",
+    "sourceNumber": 60,
+    "type": "Geometría: rectángulo inscrito en un rombo",
+    "q": "Un rectángulo de 60 cm² tiene sus vértices en los puntos medios de los lados de un rombo de 52 cm de perímetro. Calcula las diagonales del rombo.",
+    "s": "Sean D y d las diagonales del rombo. Los lados del rectángulo son D/2 y d/2, por lo que Dd=240. El lado del rombo mide 13 cm y Pitágoras da D²+d²=676. Entonces (D+d)²=676+480=1156, luego D+d=34. De t²−34t+240=(t−10)(t−24)=0, las diagonales son 10 cm y 24 cm.",
+    "system": [
+      "Dd=240",
+      "D²+d²=676"
+    ],
+    "solutions": [
+      [
+        24,
+        10
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-61",
+    "sourceNumber": 61,
+    "type": "Cifras de un número: relación cuadrática",
+    "q": "La cifra de las unidades de un número de dos cifras es el cuadrado de la cifra de las decenas y supera a esta en 6. Halla el número.",
+    "s": "Sean a la cifra de las decenas y b la de las unidades: b=a² y b−a=6. Sustituyendo: a²−a−6=(a−3)(a+2)=0. Solo a=3 es válida como cifra de las decenas; b=9. El número es 39.",
+    "system": [
+      "b=a²",
+      "b−a=6"
+    ],
+    "solutions": [
+      [
+        3,
+        9
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-63",
+    "sourceNumber": 63,
+    "type": "Números: suma y suma de inversos",
+    "q": "Dos números suman 16 y la suma de sus inversos es 2/3. Halla los números.",
+    "s": "Sean x e y los números, con x,y≠0: x+y=16 y 1/x+1/y=2/3. Como (x+y)/(xy)=2/3, resulta xy=24. Las raíces de t²−16t+24=0 son t=8±2√10. Los números son 8+2√10 y 8−2√10. La solución 4 y 12 impresa en la hoja no cumple la suma de inversos 2/3.",
+    "system": [
+      "x+y=16",
+      "1/x+1/y=2/3"
+    ],
+    "solutions": [
+      [
+        14.32455532033676,
+        1.675444679663241
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": "Solucionario corregido: se conserva el enunciado original."
+  },
+  {
+    "id": "PNL-65",
+    "sourceNumber": 65,
+    "type": "Geometría: diagonal y combinación de lados",
+    "q": "La diagonal de un rectángulo mide 9 cm. La base más el doble de la altura suman 18 cm. Halla su perímetro y su área.",
+    "s": "Sean b y h la base y la altura: b²+h²=81 y b+2h=18. Sustituyendo b=18−2h obtenemos 5h²−72h+243=0, con h=9 o h=27/5. h=9 daría b=0 y se descarta porque no forma un rectángulo. Quedan h=5,4 cm y b=7,2 cm. Perímetro: 25,2 cm. Área: 38,88 cm².",
+    "system": [
+      "b²+h²=81",
+      "b+2h=18"
+    ],
+    "solutions": [
+      [
+        7.2,
+        5.4
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-69",
+    "sourceNumber": 69,
+    "type": "Geometría: áreas y perímetros de cuadrados",
+    "q": "Las áreas de dos cuadrados distintos suman 97 cm² y sus perímetros se diferencian en 20 cm. Halla los lados de los cuadrados.",
+    "s": "Sean x el lado mayor e y el menor: x²+y²=97 y 4x−4y=20, luego x−y=5. Sustituyendo x=y+5: y²+5y−36=(y+9)(y−4)=0. Como son longitudes positivas, y=4 cm y x=9 cm.",
+    "system": [
+      "x²+y²=97",
+      "4x−4y=20"
+    ],
+    "solutions": [
+      [
+        9,
+        4
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-74",
+    "sourceNumber": 74,
+    "type": "Geometría: papel y márgenes",
+    "q": "Un pliego rectangular deja una zona útil de 360 cm² al reservar márgenes de 1 cm a izquierda y derecha, y de 2,5 cm arriba y abajo. La zona útil también es de 360 cm² si los márgenes laterales son de 2 cm y los de arriba y abajo de 1,25 cm. Halla las dimensiones del pliego.",
+    "s": "Sean b el ancho y h el alto: (b−2)(h−5)=360 y (b−4)(h−2,5)=360, con b>4 y h>5. Restando las ecuaciones desarrolladas: 2h=2,5b, luego h=5b/4. Sustituyendo en la primera: b²−6b−280=(b−20)(b+14)=0. Descartamos b=−14. El pliego mide 20 cm de ancho y 25 cm de alto.",
+    "system": [
+      "(b−2)(h−5)=360",
+      "(b−4)(h−2,5)=360"
+    ],
+    "solutions": [
+      [
+        20,
+        25
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  },
+  {
+    "id": "PNL-75",
+    "sourceNumber": 75,
+    "type": "Compras: cantidad y precio unitario",
+    "q": "Se compran discos Blu-ray vírgenes por un total de 17,25 €. Si cada disco hubiera costado 0,40 € más, se habrían podido comprar ocho discos menos por el mismo importe. ¿Cuántos se compraron y cuánto costó cada uno?",
+    "s": "Sean n el número de discos y p el precio de cada uno: np=17,25 y (n−8)(p+0,40)=17,25. Al restar: 0,40n−8p−3,20=0, luego p=0,05n−0,40. Sustituyendo: n²−8n−345=(n−23)(n+15)=0. Descartamos n=−15. Se compraron 23 discos a 0,75 € cada uno.",
+    "system": [
+      "np=17,25",
+      "(n−8)(p+0,40)=17,25"
+    ],
+    "solutions": [
+      [
+        23,
+        0.75
+      ]
+    ],
+    "nonlinear": true,
+    "source": "Raúl González Medina · Intergranada · Problemas No lineales · febrero de 2023",
+    "notes": ""
+  }
+];
+var problemBank=pool.problem.concat(newProblems);
+pool.problem=problemBank.filter(function(p){return p.nonlinear;});
+
 // Cada simulacro escoge exactamente una ecuación de cada familia.
 pool.degree=pool.bicuadratic.concat(pool.sextic);
 pool.exp=pool["exp-base"].concat(pool["exp-log"],pool["exp-factor"]);
@@ -201,7 +621,7 @@ eqs.forEach(function(s,i){body+='<li><span class="expr">'+mathRoots(actual[s.id]
 var intids=["intervals","abs"].filter(function(id){return selected[id]});
 if(intids.length){num++;body+='<section class="exam-block"><h3>'+num+'. Intervalos y valor absoluto.</h3><ol class="exam-list">';
 intids.forEach(function(id,i){body+='<li><span class="expr">'+mathRoots(actual[id].q)+'</span></li>';sol+='<div class="solution-item"><strong>'+num+'.'+letters(i)+' · '+titleFor(id)+'</strong><p>'+mathRoots(actual[id].s)+'</p></div>'});body+='</ol></section>'}
-if(selected.problem){num++;body+='<section class="exam-block"><h3>'+num+'. Problema. Plantea y resuelve un sistema de ecuaciones.</h3><p class="exam-problem">'+mathRoots(actual.problem.q)+'</p><p class="problem-source">Enunciado adaptado de la hoja de problemas de sistemas no lineales facilitada para clase.</p></section>';sol+='<div class="solution-item"><strong>'+num+' · Problema</strong><p>'+mathRoots(actual.problem.s)+'</p></div>'}
+if(selected.problem){num++;body+='<section class="exam-block"><h3>'+num+'. Problema. Plantea y resuelve un sistema de ecuaciones.</h3><p class="exam-problem">'+mathRoots(actual.problem.q)+'</p><p class="problem-source">Adaptado de «Problemas No lineales», Raúl González Medina · Intergranada (2023).</p></section>';sol+='<div class="solution-item"><strong>'+num+' · Problema</strong><p>'+mathRoots(actual.problem.s)+'</p></div>'}
 exam.innerHTML=header+cover+body;solutionBody.innerHTML=sol;document.getElementById("coverage-side").innerHTML=sections.map(function(s){return '<div class="coverage-row ' + (selected[s.id]?"included":"omitted") + '"><span class="mini-icon">' + (selected[s.id]?"✓":"✕") + '</span><span>' + s.label + '</span><b>' + (selected[s.id]?"Incluido":"Omitido") + '</b></div>'}).join("");document.getElementById("summary-count").textContent=ids.length+" / "+sections.length;document.getElementById("summary-time").textContent=time+" min";
 document.getElementById("status").textContent="Simulacro "+seq+" listo · "+ids.length+" apartados · "+time+" min";
 document.getElementById("solutions").hidden=true;document.getElementById("toggle-sols").textContent="Ver soluciones";
