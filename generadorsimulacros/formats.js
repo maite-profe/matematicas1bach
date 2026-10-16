@@ -10,109 +10,10 @@ const banks = {};
 const add = (type,q,steps,result,minutes=7) => {
   (banks[type] ||= []).push({id:type+'-'+banks[type].length,q,steps,result,minutes});
 };
-for(let k=1;k<=12;k++) {
-  const a=k+1,b=k+3;
-  add('polynomial',M(T`x^3-${a}x^2-x+${a}=0`),[T`x^2(x-${a})-(x-${a})=0`,T`(x-${a})(x^2-1)=0`,T`(x-${a})(x-1)(x+1)=0`],T`x\in\{-1,1,${a}\}`);
-  add('bicuadratic',M(T`x^4-${a*a+b*b}x^2+${a*a*b*b}=0`),[T`t=x^2\ge0`,T`t^2-${a*a+b*b}t+${a*a*b*b}=(t-${a*a})(t-${b*b})=0`,T`x^2=${a*a}\ \vee\ x^2=${b*b}`],T`x=\pm${a},\ \pm${b}`);
-  add('rational',M(T`\frac{${a+1}}{x^2-${a*a}}+\frac{1}{x+${a}}=\frac{2}{x-${a}}`),[T`x\ne\pm${a},\qquad x^2-${a*a}=(x-${a})(x+${a})`,T`${a+1}+(x-${a})=2(x+${a})`,T`x+1=2x+${2*a}`,T`x=${1-2*a}`],T`S=\{${1-2*a}\}`);
-  // La raíz negativa candidata se descarta en la ecuación original.
-  const r=k+2,c=r*r-a;
-  add('radical',M(T`\sqrt{x+${c}}=x${signed(r-a)}`),[T`x+${c}\ge0,\qquad x\ge${a-r}`,T`x+${c}=(x${signed(r-a)})^2`,T`(x-${a})(x-${a-2*r+1})=0`,T`x=${a}:\quad\sqrt{${r*r}}=${r}`,T`x=${a-2*r+1}:\quad\sqrt{${(r-1)*(r-1)}}=${1-r}\quad\text{(se descarta)}`],T`S=\{${a}\}`);
-  add('exponential',M(T`2^{2x}-${2**(k%3+1)+2**(k%3+2)}\cdot2^x+${2**(2*(k%3)+3)}=0`),[T`t=2^x>0`,T`(t-${2**(k%3+1)})(t-${2**(k%3+2)})=0`,T`2^x=2^{${k%3+1}}\ \vee\ 2^x=2^{${k%3+2}}`],T`S=\{${k%3+1},${k%3+2}\}`);
-  add('exponential',M(T`3^{x+2}-3^x=${8*3**(k%4+1)}`),[T`3^x(9-1)=${8*3**(k%4+1)}`,T`3^x=3^{${k%4+1}}`],T`x=${k%4+1}`);
-  add('logarithmic',M(T`2\log x-\log(x+${a*(a-1)})=0`),[T`x>0`,T`\log\frac{x^2}{x+${a*(a-1)}}=0`,T`x^2=x+${a*(a-1)}`,T`(x-${a})(x+${a-1})=0`,T`x=${1-a}<0\quad\text{(se descarta)}`],T`S=\{${a}\}`);
-  add('logarithmic',M(T`\log(x+${a})+\log(x-${a})=\log ${b*b-a*a}`),[T`x>${a}`,T`\log((x+${a})(x-${a}))=\log ${b*b-a*a}`,T`x^2-${a*a}=${b*b-a*a}`,T`x=\pm${b},\qquad -${b}<${a}\ \text{(se descarta)}`],T`S=\{${b}\}`);
-  const x=k%4+1,y=k%3+2,z=k%5+1;
-  add('nonlinear',M(T`\begin{cases}x-y=${b-a}\\xy=${a*b}\end{cases}`),[T`x=y+${b-a}`,T`y(y+${b-a})=${a*b}`,T`(y-${a})(y+${b})=0`,T`y=${a}\Rightarrow x=${b},\qquad y=-${b}\Rightarrow x=-${a}`],T`S=\{(${b},${a}),(-${a},-${b})\}`,8);
-  const total=6*(k+2),cc=k+2;
-  add('linearProblem',`En una caja hay billetes de ${M('5')}, ${M('10')} y ${M('20')} euros. Hay ${M(total)} billetes y suman ${M(55*cc)} euros. El número de billetes de ${M('5')} euros es el triple del de ${M('20')}. ¿Cuántos hay de cada clase?`,[T`x+y+z=${total},\quad5x+10y+20z=${55*cc},\quad x=3z`,T`4z+y=${total}\Rightarrow y=${total}-4z`,T`15z+10(${total}-4z)+20z=${55*cc}`,T`-5z=${5*cc*-1}\Rightarrow z=${cc}`,T`x=3z=${3*cc},\quad y=${2*cc}`],T`(${3*cc},${2*cc},${cc})\text{ billetes de }5,10,20\text{ euros}`,14);
-  const width=10+2*k,height=20+2*k;
-  add('nonlinearProblem',`Un jardín rectangular tiene ${M(width*height+'\\,\\mathrm{m}^2')} de superficie. Al añadir dos franjas exteriores, una a lo largo y otra a lo ancho, de ${M('2\\,\\mathrm m')} de anchura, el rectángulo completo tiene ${M((width+2)*(height+2)+'\\,\\mathrm{m}^2')}. Halla las dimensiones iniciales.`,[T`xy=${width*height},\quad(x+2)(y+2)=${(width+2)*(height+2)},\quad x,y>0`,T`xy+2x+2y+4=${(width+2)*(height+2)}`,T`x+y=${width+height}`,T`x(${width+height}-x)=${width*height}`,T`(x-${width})(x-${height})=0`],T`\text{Dimensiones: }${width}\,\mathrm m\text{ y }${height}\,\mathrm m`,14);
-  add('absolute',M(T`|x-${a}|>${b}`),[T`x-${a}<-${b}\ \vee\ x-${a}>${b}`,T`x<${a-b}\ \vee\ x>${a+b}`],T`S=(-\infty,${a-b})\cup(${a+b},+\infty)`,5);
-  add('intervals',`Dados ${M(T`A=[-${a},${b})`)} y ${M(T`B=(${k},${b+3}]`)}, calcula ${M(T`A\cup B`)} y ${M(T`A\cap B`)} y representa ambos resultados en la recta real.`,[T`A\cup B=[-${a},${b+3}]`,T`A\cap B=(${k},${b})`],T`A\cup B=[-${a},${b+3}],\quad A\cap B=(${k},${b})`,6);
-  add('classification',`Clasifica los sistemas y expresa sus soluciones: `+M(T`\text{a) }\begin{cases}x+y=${a}\\2x+2y=${2*a}\end{cases}\qquad\text{b) }\begin{cases}x+y=${a}\\2x+2y=${2*a+1}\end{cases}`),[T`\text{a) }F_2-2F_1:\quad0=0;\quad(x,y)=(t,${a}-t),\ t\in\mathbb R`,T`\text{b) }F_2-2F_1:\quad0=1\quad\text{(contradicción)}`],T`\text{a) SCI;\quad b) SI}`,7);
-  const angle=30+(k%4)*10,L=10+k,R=6+k;
-  const third=Math.sqrt(L*L+R*R-2*L*R*Math.cos(angle*Math.PI/180));
-  const aa=Math.acos((R*R+third*third-L*L)/(2*R*third))*180/Math.PI;
-  const fmt=n=>n.toFixed(2).replace('.',',');
-  add('trigTriangle',`Un terreno triangular tiene dos lados de ${M(L+'\\,\\mathrm m')} y ${M(R+'\\,\\mathrm m')} que forman un ángulo de ${M(angle+'^\\circ')}. Calcula su perímetro y los otros dos ángulos.`,[T`c^2=${L}^2+${R}^2-2\cdot${L}\cdot${R}\cos${angle}^\circ`,T`c\approx${fmt(third)}\,\mathrm m`,T`\cos A=\frac{${R}^2+c^2-${L}^2}{2\cdot${R}\cdot c}`,T`A\approx${fmt(aa)}^\circ,\qquad B=180^\circ-${angle}^\circ-A\approx${fmt(180-angle-aa)}^\circ`],T`P\approx${fmt(L+R+third)}\,\mathrm m`,12);
-  const theta=25+k,beta=theta+20,dist=20+k;
-  const h=dist/(1/Math.tan(theta*Math.PI/180)-1/Math.tan(beta*Math.PI/180));
-  add('trigHeight',`Desde un punto se ve la cima de una torre bajo un ángulo de ${M(theta+'^\\circ')}. Al acercarse ${M(dist+'\\,\\mathrm m')} en terreno horizontal, el ángulo es ${M(beta+'^\\circ')}. Calcula la altura de la torre y la distancia inicial.`,[T`\tan${theta}^\circ=\frac{h}{d},\qquad\tan${beta}^\circ=\frac{h}{d-${dist}}`,T`d=\frac{h}{\tan${theta}^\circ},\quad d-${dist}=\frac{h}{\tan${beta}^\circ}`,T`h\left(\frac1{\tan${theta}^\circ}-\frac1{\tan${beta}^\circ}\right)=${dist}`,T`d\approx${fmt(h/Math.tan(theta*Math.PI/180))}\,\mathrm m`],T`h\approx${fmt(h)}\,\mathrm m`,12);
-  const degree=k%2?30:45,sv=k%2?T`\frac12`:T`\frac{\sqrt2}{2}`,cv=k%2?T`\frac{\sqrt3}{2}`:T`\frac{\sqrt2}{2}`;
-  const shift=5*k;
-  add('trigEquation',M(T`2\cos^2(\alpha-${shift}^\circ)=${k%2?T`1+\cos(\alpha-${shift}^\circ)`:'1'}`),k%2?[T`u=\alpha-${shift}^\circ`,T`2\cos^2u-\cos u-1=0`,T`(2\cos u+1)(\cos u-1)=0`,T`\cos u=-\frac12\ \vee\ \cos u=1`]:[T`u=\alpha-${shift}^\circ`,T`\cos^2u=\frac12`,T`\cos u=\pm\frac{\sqrt2}{2}`],k%2?T`\alpha=${shift+120}^\circ+360^\circ n,\ ${shift+240}^\circ+360^\circ n,\ ${shift}^\circ+360^\circ n;\ n\in\mathbb Z`:T`\alpha=${shift+45}^\circ+90^\circ n,\quad n\in\mathbb Z`,7);
-  // Ángulos, signos y coordenadas se varían sin modificar la dificultad.
-  const ax=k-4,ay=2,dx=3,dy=4,bx=ax+dx,by=ay+dy,cx=ax-dy,cy=ay+dx;
-  add('points',`Dados ${M(T`A${coord(ax,ay)}`)}, ${M(T`B${coord(bx,by)}`)} y ${M(T`C${coord(cx,cy)}`)}: a) calcula el punto medio de ${M('AB')}; b) el simétrico de ${M('C')} respecto a ${M('A')}; c) decide si están alineados; d) calcula el perímetro y el ángulo en ${M('A')}.`,[T`M=\left(\frac{${ax+bx}}2,\frac{${ay+by}}2\right)`,T`C'=2A-C=${coord(2*ax-cx,2*ay-cy)}`,T`\overrightarrow{AB}=(3,4),\quad\overrightarrow{AC}=(-4,3)`,T`\det\begin{pmatrix}3&4\\-4&3\end{pmatrix}=25\ne0\Rightarrow\text{no alineados}`,T`\overrightarrow{AB}\cdot\overrightarrow{AC}=-12+12=0\Rightarrow\widehat A=90^\circ`,T`AB=AC=5,\quad BC=\sqrt{(-7)^2+(-1)^2}=5\sqrt2`],T`P=10+5\sqrt2,\quad\widehat A=90^\circ`,15);
-  const vx=(k%2?3:5)*k,vy=(k%2?4:12)*k,norm=(k%2?5:13)*k;
-  add('unitVector',`Dado ${M(T`\vec u=(${vx},${vy})`)}, calcula los dos vectores unitarios perpendiculares a ${M(T`\vec u`)}.`,[T`\vec v=(-${vy},${vx}),\quad\vec u\cdot\vec v=0`,T`\|\vec v\|=\sqrt{${vy}^2+${vx}^2}=${norm}`],T`\vec w=\pm\left(-\frac{${vy}}{${norm}},\frac{${vx}}{${norm}}\right)`,5);
-  add('lines',`Dadas ${M(T`r:3x+4y+${k}=0`)} y ${M(T`s:4x-3y+${k+1}=0`)}: a) halla el ángulo que forman; b) calcula la recta perpendicular a ${M('r')} que pasa por ${M(T`P(${k},2)`)}; c) calcula la distancia de ${M('P')} a ${M('r')}.`,[T`\vec v_r=(4,-3),\quad\vec v_s=(3,4),\quad\vec v_r\cdot\vec v_s=0`,T`t:4(x-${k})-3(y-2)=0`,T`t:4x-3y${signed(6-4*k)}=0`,T`d(P,r)=\frac{|3\cdot${k}+4\cdot2+${k}|}{\sqrt{3^2+4^2}}=\frac{${4*k+8}}5`],T`\widehat{(r,s)}=90^\circ,\quad d(P,r)=\frac{${4*k+8}}5`,12);
-}
-// Sistemas de tres ecuaciones y tres incógnitas: 54 SCI y 6 SCD.
-// Cada tanda de diez contiene nueve SCI y un SCD, sin repetir en la vuelta.
-function linearExpression(coefficients,variables){
- let out='';
- coefficients.forEach((n,i)=>{if(!n)return;out+=(n<0?'-':out?'+':'')+(Math.abs(n)===1?'':Math.abs(n))+variables[i];});
- return out||'0';
-}
-function affineExpression(constant,coefficient){
- return (constant===0?'':String(constant))+(coefficient?((coefficient<0?'-':constant?'+' :'')+(Math.abs(coefficient)===1?'':Math.abs(coefficient))+'t'):'')||'0';
-}
-function equationsLatex(matrix,rhs){
- return T`\begin{cases}`+matrix.map((row,i)=>linearExpression(row,['x','y','z'])+'='+rhs[i]).join(T`\\`)+T`\end{cases}`;
-}
-for(let k=0;k<54;k++){
- const b=k%5-2,c=(Math.floor(k/5)%5-2)||3,e=k%2?1:-1,f=k%7-3,g=k%11-5,d=k+3;
- const alpha=3+k%3,beta=k%2?-1:2;
- const row1=[1,b,c],row2=[2,2*b+e,2*c+f];
- const row3=row1.map((v,i)=>alpha*v+beta*row2[i]);
- const matrix=[row1,row2,row3],rhs=[d,2*d+g,alpha*d+beta*(2*d+g)];
- const y0=g/e,yt=-f/e,x0=d-b*y0,xt=-b*yt-c;
- const reduced=equationsLatex([row1,[0,e,f],[0,0,0]],[d,g,0]);
- add('linear3',`Resuelve y clasifica. Si es SCI, parametriza todas sus soluciones. `+M(equationsLatex(matrix,rhs)),[
-  T`E_3\leftarrow E_3${signed(-alpha)}E_1${signed(-beta)}E_2`,
-  equationsLatex([row1,row2,[0,0,0]],[rhs[0],rhs[1],0]),
-  T`E_2\leftarrow E_2-2E_1`,
-  reduced,
-  T`\text{Dos ecuaciones independientes y tres incógnitas: SCI.}`,
-  T`z=t,\qquad t\in\mathbb R`,
-  T`y=${affineExpression(y0,yt)}`,
-  T`x=${d}-\left(${linearExpression([b,c],['y','z'])}\right)=${affineExpression(x0,xt)}`
- ],T`S=\left\{\left(${affineExpression(x0,xt)},\ ${affineExpression(y0,yt)},\ t\right):t\in\mathbb R\right\}`,10);
- Object.assign(banks.linear3.at(-1),{classification:'SCI',matrix,rhs,affine:{constant:[x0,y0,0],direction:[xt,yt,1]}});
-}
-for(let k=0;k<6;k++){
- const b=k-2,c=3-k,f=k%3-1,d=2*k+5,g=k+2,h=k-3;
- const row1=[1,b,c],row2=[2,2*b+1,2*c+f],row3=[3,3*b+2,3*c+2*f+1];
- const matrix=[row1,row2,row3],rhs=[d,2*d+g,3*d+2*g+h];
- const y=g-f*h,x=d-b*y-c*h;
- add('linear3',`Resuelve y clasifica. Si es SCI, parametriza todas sus soluciones. `+M(equationsLatex(matrix,rhs)),[
-  T`E_2\leftarrow E_2-2E_1,\qquad E_3\leftarrow E_3-3E_1`,
-  equationsLatex([row1,[0,1,f],[0,2,2*f+1]],[d,g,2*g+h]),
-  T`E_3\leftarrow E_3-2E_2`,
-  equationsLatex([row1,[0,1,f],[0,0,1]],[d,g,h]),
-  T`z=${h},\qquad y=${g}-(${f})(${h})=${y}`,
-  T`x=${d}-(${b})(${y})-(${c})(${h})=${x}`,
-  T`\text{Tres ecuaciones independientes: SCD.}`
- ],T`S=\left\{(${x},${y},${h})\right\}`,10);
- Object.assign(banks.linear3.at(-1),{classification:'SCD',matrix,rhs,solution:[x,y,h]});
-}
 function shuffledIndices(indices){
  const out=indices.slice();for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;
 }
-function linear3Deck(){
- const sci=shuffledIndices(banks.linear3.flatMap((q,i)=>q.classification==='SCI'?[i]:[]));
- const scd=shuffledIndices(banks.linear3.flatMap((q,i)=>q.classification==='SCD'?[i]:[]));
- const deck=[];
- while(scd.length)deck.push(...shuffledIndices(sci.splice(0,9).concat(scd.pop())));
- const lastIndex=deck.length-1;
- if(deck[lastIndex]===usedLast.linear3){
-  const swap=deck.findIndex(i=>i!==deck[lastIndex]&&banks.linear3[i].classification===banks.linear3[deck[lastIndex]].classification);
-  [deck[swap],deck[lastIndex]]=[deck[lastIndex],deck[swap]];
- }
- return deck;
-}
+function linear3Deck(){return shuffledIndices(banks.linear3.map((_,i)=>i));}
 
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 // Bancos para los formatos de segunda y tercera evaluación.
@@ -154,8 +55,40 @@ for(let k=1;k<=12;k++) {
 }
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
+// Catálogo de la primera evaluación: solo ejercicios contrastados con una fuente.
+const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines'];
+for(const topic of firstEvaluationTopics)banks[topic]=[];
+for(const original of FIRST_EVALUATION_CATALOG){
+ const item={...original,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
+ banks[item.topic].push(item);
+}
+// El formato original comparte exactamente el mismo catálogo, sin copias divergentes.
+const legacyTopics={algebra:'polynomial',degree:'bicuadratic',rational:'rational',radical:'radical',exp:'exponential',log:'logarithmic',systems:'nonlinear',intervals:'intervals',abs:'absolute',problem:'nonlinearProblem'};
+for(const [legacy,topic] of Object.entries(legacyTopics))pool[legacy]=banks[topic].map(q=>({...q,s:q.steps.map(M).join('<br>')+'<br>'+M(q.result)}));
+sections=sections.filter(section=>pool[section.id]?.length);
+selected=Object.fromEntries(sections.map(section=>[section.id,true]));
+const problemHistory={};
+function pickOriginalProblem(type,questions){
+ const storageKey='maite-bach-original-problems-v1:'+type;
+ let history=problemHistory[type];
+ if(!history){try{history=JSON.parse(localStorage.getItem(storageKey)||'null')}catch(e){}history??={used:[],last:null};problemHistory[type]=history;}
+ const validIds=new Set(questions.map(q=>q.id));
+ history.used=(history.used||[]).filter(id=>validIds.has(id));
+ let remaining=questions.filter(q=>!history.used.includes(q.id));
+ if(!remaining.length){history.used=[];remaining=questions.slice();}
+ const alternatives=remaining.filter(q=>q.id!==history.last);if(alternatives.length)remaining=alternatives;
+ const question=remaining[Math.floor(Math.random()*remaining.length)];
+ history.used.push(question.id);history.last=question.id;
+ try{localStorage.setItem(storageKey,JSON.stringify(history))}catch(e){}
+ return question;
+}
+function sourceCaption(q){
+ if(!q.source)return '';
+ return '<p class="source-caption">Fuente: '+esc(q.source.document)+' · pág. '+q.source.page+' · ejercicio '+esc(q.source.exercise)+'</p>';
+}
+
 const topicInfo={
-  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas lineales','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
+  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de tres incógnitas','systems'],linearProblem2:['Problemas de dos incógnitas','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
 };
 const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
 let taught={};
@@ -177,13 +110,13 @@ const legacyRender=render,legacyDraw=drawControls;
 const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
- if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem','nonlinearProblem']:['trigTriangle','trigHeight','trigEquation'];
- if(activeFormat==='exam1') return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','nonlinearProblem','trigTriangle','trigHeight','trigEquation','points','unitVector','lines'];
- return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','nonlinearProblem','classification','absolute','intervals'];
+ if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']:['trigTriangle','trigHeight','trigEquation'];
+ if(activeFormat==='exam1') return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','trigTriangle','trigHeight','trigEquation','points','unitVector','lines'];
+ return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
 const currentMemory=()=>memories[memoryKey()] ||= {chosen:{},forced:{},paper:null,serial:0};
-const available=t=>!!banks[t];
+const available=t=>Array.isArray(banks[t])&&banks[t].length>0;
 const previousOrders={};
 function shuffledItems(items,key){
  const shuffled=shuffledIndices(items.map((_,i)=>i)).map(i=>items[i]);
@@ -215,6 +148,7 @@ function shuffleLegacyOrder(){
 }
 
 function pickBank(type){
+ if(['linearProblem','linearProblem2','nonlinearProblem'].includes(type))return pickOriginalProblem(type,banks[type]);
  if(type==='linear3'){if(!decks[type]?.length)decks[type]=linear3Deck();const index=decks[type].pop();usedLast[type]=index;return banks[type][index];}
  let deck=decks[type];
  if(!deck||deck.length===0){deck=banks[type].map((_,i)=>i);for(let i=deck.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}if(deck.length>1&&deck.at(-1)===usedLast[type]) [deck[0],deck[deck.length-1]]=[deck.at(-1),deck[0]];decks[type]=deck}
@@ -235,9 +169,9 @@ function drawStages(){
 function drawTopics(){
  const state=currentMemory();
  document.getElementById('controls').innerHTML=typesFor().map(type=>{
-  if(!(type in state.chosen))state.chosen[type]=!!taught[topicInfo[type][1]];
+  if(!(type in state.chosen))state.chosen[type]=type==='linearProblem2'?false:!!taught[topicInfo[type][1]];
   const ok=available(type);
-  return `<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':banks[type][0].minutes+' min aprox.'):'Próximo contenido'}</em></label>`;
+  return `<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':banks[type][0].minutes+' min aprox.'):'Pendiente de material'}</em></label>`;
  }).join('');
  document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&!taught[topicInfo[el.dataset.topic][1]]);updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
  updateTime();
@@ -265,7 +199,7 @@ function templates(){
  }
  if(activeFormat==='exam1')return choice([
   [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Vectores perpendiculares.',types:['unitVector'],points:1.25}],
-  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem','nonlinearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
+  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem','linearProblem2','nonlinearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
  ]);
  return choice([
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3','exponential','logarithmic','rational'],points:5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:3},{title:'Clasifica los sistemas.',types:['classification'],points:2}],
@@ -309,7 +243,7 @@ function displayPaper(paper){
  let sol='';
  paper.blocks.forEach((b,i)=>{
   h+=`<section class="exam-block"><h3>${i+1}. ${b.title} <span class="points">(${b.score.toFixed(2).replace('.',',')} puntos)</span></h3><ol class="exam-list">`;
-  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${((Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div></article>`;});
+  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${((Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div>${sourceCaption(q)}</article>`;});
   h+='</ol></section>';
  });
  document.getElementById('exam').innerHTML=h;
@@ -324,7 +258,7 @@ function createPaper(){
  const f=formats.find(f=>f.id===activeFormat);
  if(f.pending)return;
  if(activeFormat==='follow1'&&followModel==='original'){
-  legacyRender();shuffleLegacyOrder();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
+  legacyRender();shuffleLegacyOrder();mathTypeset();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
  }
  const blocks=makePlan(true);
  if(!blocks.length){currentMemory().paper=null;document.getElementById('coverage-side').innerHTML=typesFor().map(t=>`<div class="coverage-row omitted"><span class="mini-icon">✕</span><span>${topicInfo[t][0]}</span><b>Omitido</b></div>`).join('');document.getElementById('duration').innerHTML='Tiempo estimado: <strong>0 min</strong>';document.getElementById('exam').innerHTML='<div class="empty">Selecciona al menos un contenido trabajado para crear el simulacro.</div>';document.getElementById('solution-body').innerHTML='';document.getElementById('solutions').hidden=true;document.getElementById('summary-count').textContent='0';document.getElementById('summary-time').textContent='0 min';document.getElementById('status').textContent='No hay contenidos activos seleccionados.';return;}
@@ -360,7 +294,7 @@ function drawFormat(){
   selected={...savedLegacy.selected};legacyDraw();
   if(savedLegacy.exam){document.getElementById('exam').innerHTML=savedLegacy.exam;document.getElementById('solution-body').innerHTML=savedLegacy.solution;actual={...savedLegacy.actual};document.getElementById('coverage-side').innerHTML=savedLegacy.side;document.getElementById('summary-count').textContent=savedLegacy.count;document.getElementById('summary-time').textContent=savedLegacy.time;document.getElementById('status').textContent=savedLegacy.status;document.getElementById('solutions').hidden=true;document.getElementById('toggle-sols').textContent='Ver soluciones';}
   else createPaper();
- }else{drawTopics();const state=currentMemory();if(state.paper)displayPaper(state.paper);else createPaper();}
+ }else{drawTopics();const state=currentMemory();if(state.paper)displayPaper(state.paper);else createPaper();}mathTypeset();
 }
 function switchFormat(id){
  if(activeFormat==='follow1'&&followModel==='original')savedLegacy.selected={...selected};
