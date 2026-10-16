@@ -624,10 +624,10 @@ var time=duration(),date=new Intl.DateTimeFormat("es-ES",{timeZone:"Europe/Madri
 var logo=document.getElementById('brand-logo').src;var header='<div class="paper-brand"><img src="'+logo+'" alt="Colegio Punta Galea"><span>MATEMÁTICAS · 1.º BACHILLERATO<br>PRIMERA EVALUACIÓN</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>SIMULACRO DE MATEMÁTICAS</h2><div class="sub">Tiempo estimado: '+time+' minutos</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: '+date+'</span></div>';
 var cover='<div class="coverage"><b>Contenidos:</b> '+sections.map(function(s){return '<span class="'+(selected[s.id]?"":"off")+'">'+(selected[s.id]?"✓":"✕")+' '+s.label+'</span>'}).join(" · ")+"</div>";
 var body="",sol="",num=0;
-var eqs=sections.filter(function(s){return s.group==="ecuaciones"&&selected[s.id]});
+var eqs=shuffledItems(sections.filter(function(s){return s.group==="ecuaciones"&&selected[s.id]}),"legacy:equations");
 if(eqs.length){num++;body+='<section class="exam-block"><h3>'+num+'. Resuelve las siguientes ecuaciones'+(selected.systems?' y el sistema no lineal':'')+'.</h3><ol class="exam-list">';
 eqs.forEach(function(s,i){body+='<li><span class="expr">'+mathRoots(actual[s.id].q)+'</span></li>';sol+='<div class="solution-item"><strong>'+num+'.'+letters(i)+' · '+s.label+'</strong><p>'+mathRoots(actual[s.id].s)+'</p></div>'});body+='</ol></section>'}
-var intids=["intervals","abs"].filter(function(id){return selected[id]});
+var intids=shuffledItems(["intervals","abs"].filter(function(id){return selected[id]}),"legacy:intervals");
 if(intids.length){num++;body+='<section class="exam-block"><h3>'+num+'. Intervalos y valor absoluto.</h3><ol class="exam-list">';
 intids.forEach(function(id,i){body+='<li><span class="expr">'+mathRoots(actual[id].q)+'</span></li>';sol+='<div class="solution-item"><strong>'+num+'.'+letters(i)+' · '+titleFor(id)+'</strong><p>'+mathRoots(actual[id].s)+'</p></div>'});body+='</ol></section>'}
 if(selected.problem){num++;body+='<section class="exam-block"><h3>'+num+'. Problema. Plantea y resuelve un sistema de ecuaciones.</h3><p class="exam-problem">'+mathRoots(actual.problem.q)+'</p><p class="problem-source">Adaptado de «Problemas No lineales», Raúl González Medina · Intergranada (2023).</p></section>';sol+='<div class="solution-item"><strong>'+num+' · Problema</strong><p>'+mathRoots(actual.problem.s)+'</p></div>'}
@@ -636,5 +636,5 @@ document.getElementById("status").textContent="Simulacro "+seq+" listo · "+ids.
 document.getElementById("solutions").hidden=true;document.getElementById("toggle-sols").textContent="Ver soluciones";
 }
 </script>
-<script src="formats.js"></script>
+<script src="formats.js?v=20261016-aleatorio"></script>
 </body></html>
