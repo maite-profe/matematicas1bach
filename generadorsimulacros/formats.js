@@ -184,6 +184,36 @@ const typesFor = () => {
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
 const currentMemory=()=>memories[memoryKey()] ||= {chosen:{},forced:{},paper:null,serial:0};
 const available=t=>!!banks[t];
+const previousOrders={};
+function shuffledItems(items,key){
+ const shuffled=shuffledIndices(items.map((_,i)=>i)).map(i=>items[i]);
+ if(key&&shuffled.length>1){
+  const signature=arr=>JSON.stringify(arr.map(item=>item.id??item.type??item.title??String(item)));
+  if(signature(shuffled)===previousOrders[key]){
+   const shift=1+Math.floor(Math.random()*(shuffled.length-1));
+   shuffled.push(...shuffled.splice(0,shift));
+  }
+  previousOrders[key]=signature(shuffled);
+ }
+ return shuffled;
+}
+function shuffleLegacyOrder(){
+ const paper=document.getElementById('exam'),solutions=document.getElementById('solution-body');
+ const blocks=Array.from(paper.querySelectorAll('.exam-block')).map((element,i)=>({id:i+1,element}));
+ if(!blocks.length)return;
+ const reordered=shuffledItems(blocks,'legacy:blocks');
+ const answers=Array.from(solutions.querySelectorAll('.solution-item')).map(element=>({element,label:element.querySelector('strong'),old:Number(element.querySelector('strong').textContent.match(/^\d+/)?.[0])}));
+ reordered.forEach((block,i)=>{
+  const heading=block.element.querySelector('h3');
+  heading.textContent=heading.textContent.replace(/^\d+\./,(i+1)+'.');
+  paper.appendChild(block.element);
+  for(const answer of answers.filter(a=>a.old===block.id)){
+   answer.label.textContent=answer.label.textContent.replace(/^\d+/,String(i+1));
+   solutions.appendChild(answer.element);
+  }
+ });
+}
+
 function pickBank(type){
  if(type==='linear3'){if(!decks[type]?.length)decks[type]=linear3Deck();const index=decks[type].pop();usedLast[type]=index;return banks[type][index];}
  let deck=decks[type];
@@ -251,7 +281,10 @@ function makePlan(draw=false){
  if(extra.length)plan.push({title:'Contenido adicional seleccionado.',types:extra,points:extra.length,fullCount:extra.length});
  // Si no queda ningún apartado del modelo, se practica la selección manual.
  if(!plan.length && selectedSet.size){const fallback=[...selectedSet];plan.push({title:'Resuelve los apartados seleccionados.',types:fallback,points:10,fullCount:fallback.length});}
- if(draw) for(const block of plan)block.questions=block.types.map(type=>({type,...pickBank(type)}));
+ if(draw){
+  for(const block of plan)block.questions=shuffledItems(block.types.map(type=>({type,...pickBank(type)})),memoryKey()+':'+block.title);
+  return shuffledItems(plan,memoryKey()+':blocks');
+ }
  return plan;
 }
 function updateTime(){const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';}
@@ -291,7 +324,7 @@ function createPaper(){
  const f=formats.find(f=>f.id===activeFormat);
  if(f.pending)return;
  if(activeFormat==='follow1'&&followModel==='original'){
-  legacyRender();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
+  legacyRender();shuffleLegacyOrder();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
  }
  const blocks=makePlan(true);
  if(!blocks.length){currentMemory().paper=null;document.getElementById('coverage-side').innerHTML=typesFor().map(t=>`<div class="coverage-row omitted"><span class="mini-icon">✕</span><span>${topicInfo[t][0]}</span><b>Omitido</b></div>`).join('');document.getElementById('duration').innerHTML='Tiempo estimado: <strong>0 min</strong>';document.getElementById('exam').innerHTML='<div class="empty">Selecciona al menos un contenido trabajado para crear el simulacro.</div>';document.getElementById('solution-body').innerHTML='';document.getElementById('solutions').hidden=true;document.getElementById('summary-count').textContent='0';document.getElementById('summary-time').textContent='0 min';document.getElementById('status').textContent='No hay contenidos activos seleccionados.';return;}
