@@ -23,7 +23,6 @@ for(let k=1;k<=12;k++) {
   add('logarithmic',M(T`2\log x-\log(x+${a*(a-1)})=0`),[T`x>0`,T`\log\frac{x^2}{x+${a*(a-1)}}=0`,T`x^2=x+${a*(a-1)}`,T`(x-${a})(x+${a-1})=0`,T`x=${1-a}<0\quad\text{(se descarta)}`],T`S=\{${a}\}`);
   add('logarithmic',M(T`\log(x+${a})+\log(x-${a})=\log ${b*b-a*a}`),[T`x>${a}`,T`\log((x+${a})(x-${a}))=\log ${b*b-a*a}`,T`x^2-${a*a}=${b*b-a*a}`,T`x=\pm${b},\qquad -${b}<${a}\ \text{(se descarta)}`],T`S=\{${b}\}`);
   const x=k%4+1,y=k%3+2,z=k%5+1;
-  add('linear3',M(T`\begin{cases}x+y+z=${x+y+z}\\2x-y+z=${2*x-y+z}\\x+2y-z=${x+2*y-z}\end{cases}`),[T`\left(\begin{array}{ccc|c}1&1&1&${x+y+z}\\2&-1&1&${2*x-y+z}\\1&2&-1&${x+2*y-z}\end{array}\right)`,T`F_2\leftarrow F_2-2F_1,\quad F_3\leftarrow F_3-F_1`,T`\left(\begin{array}{ccc|c}1&1&1&${x+y+z}\\0&-3&-1&${-3*y-z}\\0&1&-2&${y-2*z}\end{array}\right)`,T`F_3\leftarrow 3F_3+F_2\quad\Longrightarrow\quad -7z=${-7*z}`,T`z=${z},\quad -3y-${z}=${-3*y-z}\Rightarrow y=${y}`,T`x=${x+y+z}-${y}-${z}=${x}`],T`(x,y,z)=(${x},${y},${z})`,10);
   add('nonlinear',M(T`\begin{cases}x-y=${b-a}\\xy=${a*b}\end{cases}`),[T`x=y+${b-a}`,T`y(y+${b-a})=${a*b}`,T`(y-${a})(y+${b})=0`,T`y=${a}\Rightarrow x=${b},\qquad y=-${b}\Rightarrow x=-${a}`],T`S=\{(${b},${a}),(-${a},-${b})\}`,8);
   const total=6*(k+2),cc=k+2;
   add('linearProblem',`En una caja hay billetes de ${M('5')}, ${M('10')} y ${M('20')} euros. Hay ${M(total)} billetes y suman ${M(55*cc)} euros. El número de billetes de ${M('5')} euros es el triple del de ${M('20')}. ¿Cuántos hay de cada clase?`,[T`x+y+z=${total},\quad5x+10y+20z=${55*cc},\quad x=3z`,T`4z+y=${total}\Rightarrow y=${total}-4z`,T`15z+10(${total}-4z)+20z=${55*cc}`,T`-5z=${5*cc*-1}\Rightarrow z=${cc}`,T`x=3z=${3*cc},\quad y=${2*cc}`],T`(${3*cc},${2*cc},${cc})\text{ billetes de }5,10,20\text{ euros}`,14);
@@ -50,6 +49,71 @@ for(let k=1;k<=12;k++) {
   add('unitVector',`Dado ${M(T`\vec u=(${vx},${vy})`)}, calcula los dos vectores unitarios perpendiculares a ${M(T`\vec u`)}.`,[T`\vec v=(-${vy},${vx}),\quad\vec u\cdot\vec v=0`,T`\|\vec v\|=\sqrt{${vy}^2+${vx}^2}=${norm}`],T`\vec w=\pm\left(-\frac{${vy}}{${norm}},\frac{${vx}}{${norm}}\right)`,5);
   add('lines',`Dadas ${M(T`r:3x+4y+${k}=0`)} y ${M(T`s:4x-3y+${k+1}=0`)}: a) halla el ángulo que forman; b) calcula la recta perpendicular a ${M('r')} que pasa por ${M(T`P(${k},2)`)}; c) calcula la distancia de ${M('P')} a ${M('r')}.`,[T`\vec v_r=(4,-3),\quad\vec v_s=(3,4),\quad\vec v_r\cdot\vec v_s=0`,T`t:4(x-${k})-3(y-2)=0`,T`t:4x-3y${signed(6-4*k)}=0`,T`d(P,r)=\frac{|3\cdot${k}+4\cdot2+${k}|}{\sqrt{3^2+4^2}}=\frac{${4*k+8}}5`],T`\widehat{(r,s)}=90^\circ,\quad d(P,r)=\frac{${4*k+8}}5`,12);
 }
+// Sistemas de tres ecuaciones y tres incógnitas: 54 SCI y 6 SCD.
+// Cada tanda de diez contiene nueve SCI y un SCD, sin repetir en la vuelta.
+function linearExpression(coefficients,variables){
+ let out='';
+ coefficients.forEach((n,i)=>{if(!n)return;out+=(n<0?'-':out?'+':'')+(Math.abs(n)===1?'':Math.abs(n))+variables[i];});
+ return out||'0';
+}
+function affineExpression(constant,coefficient){
+ return (constant===0?'':String(constant))+(coefficient?((coefficient<0?'-':constant?'+' :'')+(Math.abs(coefficient)===1?'':Math.abs(coefficient))+'t'):'')||'0';
+}
+function equationsLatex(matrix,rhs){
+ return T`\begin{cases}`+matrix.map((row,i)=>linearExpression(row,['x','y','z'])+'='+rhs[i]).join(T`\\`)+T`\end{cases}`;
+}
+for(let k=0;k<54;k++){
+ const b=k%5-2,c=(Math.floor(k/5)%5-2)||3,e=k%2?1:-1,f=k%7-3,g=k%11-5,d=k+3;
+ const alpha=3+k%3,beta=k%2?-1:2;
+ const row1=[1,b,c],row2=[2,2*b+e,2*c+f];
+ const row3=row1.map((v,i)=>alpha*v+beta*row2[i]);
+ const matrix=[row1,row2,row3],rhs=[d,2*d+g,alpha*d+beta*(2*d+g)];
+ const y0=g/e,yt=-f/e,x0=d-b*y0,xt=-b*yt-c;
+ const reduced=equationsLatex([row1,[0,e,f],[0,0,0]],[d,g,0]);
+ add('linear3',`Resuelve y clasifica. Si es SCI, parametriza todas sus soluciones. `+M(equationsLatex(matrix,rhs)),[
+  T`E_3\leftarrow E_3${signed(-alpha)}E_1${signed(-beta)}E_2`,
+  equationsLatex([row1,row2,[0,0,0]],[rhs[0],rhs[1],0]),
+  T`E_2\leftarrow E_2-2E_1`,
+  reduced,
+  T`\text{Dos ecuaciones independientes y tres incógnitas: SCI.}`,
+  T`z=t,\qquad t\in\mathbb R`,
+  T`y=${affineExpression(y0,yt)}`,
+  T`x=${d}-\left(${linearExpression([b,c],['y','z'])}\right)=${affineExpression(x0,xt)}`
+ ],T`S=\left\{\left(${affineExpression(x0,xt)},\ ${affineExpression(y0,yt)},\ t\right):t\in\mathbb R\right\}`,10);
+ Object.assign(banks.linear3.at(-1),{classification:'SCI',matrix,rhs,affine:{constant:[x0,y0,0],direction:[xt,yt,1]}});
+}
+for(let k=0;k<6;k++){
+ const b=k-2,c=3-k,f=k%3-1,d=2*k+5,g=k+2,h=k-3;
+ const row1=[1,b,c],row2=[2,2*b+1,2*c+f],row3=[3,3*b+2,3*c+2*f+1];
+ const matrix=[row1,row2,row3],rhs=[d,2*d+g,3*d+2*g+h];
+ const y=g-f*h,x=d-b*y-c*h;
+ add('linear3',`Resuelve y clasifica. Si es SCI, parametriza todas sus soluciones. `+M(equationsLatex(matrix,rhs)),[
+  T`E_2\leftarrow E_2-2E_1,\qquad E_3\leftarrow E_3-3E_1`,
+  equationsLatex([row1,[0,1,f],[0,2,2*f+1]],[d,g,2*g+h]),
+  T`E_3\leftarrow E_3-2E_2`,
+  equationsLatex([row1,[0,1,f],[0,0,1]],[d,g,h]),
+  T`z=${h},\qquad y=${g}-(${f})(${h})=${y}`,
+  T`x=${d}-(${b})(${y})-(${c})(${h})=${x}`,
+  T`\text{Tres ecuaciones independientes: SCD.}`
+ ],T`S=\left\{(${x},${y},${h})\right\}`,10);
+ Object.assign(banks.linear3.at(-1),{classification:'SCD',matrix,rhs,solution:[x,y,h]});
+}
+function shuffledIndices(indices){
+ const out=indices.slice();for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;
+}
+function linear3Deck(){
+ const sci=shuffledIndices(banks.linear3.flatMap((q,i)=>q.classification==='SCI'?[i]:[]));
+ const scd=shuffledIndices(banks.linear3.flatMap((q,i)=>q.classification==='SCD'?[i]:[]));
+ const deck=[];
+ while(scd.length)deck.push(...shuffledIndices(sci.splice(0,9).concat(scd.pop())));
+ const lastIndex=deck.length-1;
+ if(deck[lastIndex]===usedLast.linear3){
+  const swap=deck.findIndex(i=>i!==deck[lastIndex]&&banks.linear3[i].classification===banks.linear3[deck[lastIndex]].classification);
+  [deck[swap],deck[lastIndex]]=[deck[lastIndex],deck[swap]];
+ }
+ return deck;
+}
+
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 // Bancos para los formatos de segunda y tercera evaluación.
 // Variantes de las familias presentes en los exámenes de referencia.
@@ -91,7 +155,7 @@ for(let k=1;k<=12;k++) {
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
 const topicInfo={
-  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas lineales de tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas lineales','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
+  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas lineales','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
 };
 const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
 let taught={};
@@ -121,6 +185,7 @@ const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followMo
 const currentMemory=()=>memories[memoryKey()] ||= {chosen:{},forced:{},paper:null,serial:0};
 const available=t=>!!banks[t];
 function pickBank(type){
+ if(type==='linear3'){if(!decks[type]?.length)decks[type]=linear3Deck();const index=decks[type].pop();usedLast[type]=index;return banks[type][index];}
  let deck=decks[type];
  if(!deck||deck.length===0){deck=banks[type].map((_,i)=>i);for(let i=deck.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}if(deck.length>1&&deck.at(-1)===usedLast[type]) [deck[0],deck[deck.length-1]]=[deck.at(-1),deck[0]];decks[type]=deck}
  const i=deck.pop();usedLast[type]=i;return banks[type][i];
@@ -275,3 +340,4 @@ document.getElementById('none').onclick=()=>{if(activeFormat==='follow1'&&follow
 document.getElementById('toggle-sols').onclick=function(){const box=document.getElementById('solutions');box.hidden=!box.hidden;this.textContent=box.hidden?'Ver soluciones':'Ocultar soluciones';if(!box.hidden){mathTypeset();box.scrollIntoView({behavior:'smooth',block:'start'});}};
 document.getElementById('print').onclick=()=>window.print();
 drawFormat();
+
