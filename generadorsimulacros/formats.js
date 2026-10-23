@@ -56,45 +56,47 @@ for(let k=1;k<=12;k++) {
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
 // Catálogo de la primera evaluación: solo ejercicios contrastados con una fuente.
-const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines'];
+const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 for(const topic of firstEvaluationTopics)banks[topic]=[];
 for(const original of FIRST_EVALUATION_CATALOG){
  const item={...original,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
- banks[item.topic].push(item);
+ (banks[item.topic] ||= []).push(item);
 }
 // El formato original comparte exactamente el mismo catálogo, sin copias divergentes.
 const legacyTopics={algebra:'polynomial',degree:'bicuadratic',rational:'rational',radical:'radical',exp:'exponential',log:'logarithmic',systems:'nonlinear',intervals:'intervals',abs:'absolute',problem:'nonlinearProblem'};
 for(const [legacy,topic] of Object.entries(legacyTopics))pool[legacy]=banks[topic].map(q=>({...q,s:q.steps.map(M).join('<br>')+'<br>'+M(q.result)}));
 sections=sections.filter(section=>pool[section.id]?.length);
 selected=Object.fromEntries(sections.map(section=>[section.id,true]));
-const problemHistory={};
-function pickOriginalProblem(type,questions){
- const storageKey='maite-bach-original-problems-v1:'+type;
- let history=problemHistory[type];
- if(!history){try{history=JSON.parse(localStorage.getItem(storageKey)||'null')}catch(e){}history??={used:[],last:null};problemHistory[type]=history;}
- const validIds=new Set(questions.map(q=>q.id));
- history.used=(history.used||[]).filter(id=>validIds.has(id));
- let remaining=questions.filter(q=>!history.used.includes(q.id));
- if(!remaining.length){history.used=[];remaining=questions.slice();}
- const alternatives=remaining.filter(q=>q.id!==history.last);if(alternatives.length)remaining=alternatives;
- const question=remaining[Math.floor(Math.random()*remaining.length)];
- history.used.push(question.id);history.last=question.id;
- try{localStorage.setItem(storageKey,JSON.stringify(history))}catch(e){}
- return question;
+// Un historial por pestaña, compartido entre formatos y conservado al recargar.
+const historyStorageKey='bach-question-history-v3';
+let sessionHistory={used:[],coverage:{}};
+try{const saved=JSON.parse(sessionStorage.getItem(historyStorageKey)||'null');if(saved&&Array.isArray(saved.used))sessionHistory={used:saved.used,coverage:saved.coverage||{}};}catch(e){}
+const usedQuestions=new Set(sessionHistory.used);
+function questionKey(q){return (q.q+'|'+(q.latex||'')).normalize('NFKC').replace(/\s+/g,'').replace(/&(?:amp|lt|gt);/g,s=>({'&amp;':'&','&lt;':'<','&gt;':'>'})[s]);}
+function unseenQuestions(type){return (banks[type]||[]).filter(q=>!usedQuestions.has(q.id)&&!usedQuestions.has(questionKey(q)));}
+function rememberQuestion(q){
+ usedQuestions.add(q.id);usedQuestions.add(questionKey(q));
+ sessionHistory.used=[...usedQuestions];sessionHistory.coverage[q.topic||q.type]=(sessionHistory.coverage[q.topic||q.type]||0)+1;
+ try{sessionStorage.setItem(historyStorageKey,JSON.stringify(sessionHistory));}catch(e){}
+ return q;
 }
+function pickOriginalProblem(type,questions){return pickBank(type);}
 function sourceCaption(q){
  if(!q.source)return '';
  return '<p class="source-caption">Fuente: '+esc(q.source.document)+' · pág. '+q.source.page+' · ejercicio '+esc(q.source.exercise)+'</p>';
 }
 
 const topicInfo={
+  inequality:['Inecuaciones','inequalities'],inequalitySystem1:['Sistemas de inecuaciones con una incógnita','inequalities'],inequalitySystem2:['Sistemas de inecuaciones con dos incógnitas','inequalities'],rationalInequality:['Inecuaciones con fracciones algebraicas','inequalities'],inequalityProblem:['Problemas de inecuaciones','inequalities'],
   polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de tres incógnitas','systems'],linearProblem2:['Problemas de dos incógnitas','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
 };
-const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
+const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],inequalities:['Inecuaciones y sistemas de inecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
 let taught={};
 try{taught=JSON.parse(localStorage.getItem('bach-taught-v1')||'{}')}catch(e){}
 for(const [id,value] of Object.entries(stages)) if(typeof taught[id]!=='boolean')taught[id]=value[1];
+const currentClassTopics=['linear3','linearProblem','inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem'];
 const formats=[
+ {id:'class50',label:'Nota de clase actual · 50 min',topics:currentClassTopics,description:'Práctica de la próxima nota de clase: sistemas de tres incógnitas, problemas de Gauss, inecuaciones y sus problemas. Cada simulacro alterna contenidos para ajustarse a 50 minutos, con tiempo de revisión.'},
  {id:'follow1',label:'Seguimiento · 1.ª evaluación',legacy:true,description:'Se conserva el generador que ya utilizabas: ecuaciones, sistemas no lineales, intervalos y problema. Puedes elegir también los modelos de seguimiento de los exámenes aportados.'},
  {id:'class1',label:'Nota de clase · 1.ª evaluación',description:'Pruebas breves con un formato propio: ecuaciones, sistemas o trigonometría, según la unidad.'},
  {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Combina álgebra, sistemas, problemas, trigonometría y geometría. La distribución varía entre los modelos de los exámenes aportados.'},
@@ -104,15 +106,15 @@ const formats=[
  {id:'exam3',label:'Evaluación · 3.ª evaluación',topics:['integrals','area','study','optimization','derivability','highLimit'],description:'Formato de integrales y sus aplicaciones, representación de funciones, derivabilidad, límites y optimización.'}
 ];
 const memories={}, decks={}, usedLast={};
-let activeFormat='follow1',followModel='original',classUnit='equations',activePaper=null,serial=0;
+let activeFormat='class50',followModel='original',classUnit='equations',activePaper=null,serial=0;
 const savedLegacy={selected:{...selected},actual:null,exam:'',solution:''};
 const legacyRender=render,legacyDraw=drawControls;
 const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
  if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']:['trigTriangle','trigHeight','trigEquation'];
- if(activeFormat==='exam1') return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','trigTriangle','trigHeight','trigEquation','points','unitVector','lines'];
- return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals'];
+ if(activeFormat==='exam1') return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
+ return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
 const currentMemory=()=>memories[memoryKey()] ||= {chosen:{},forced:{},paper:null,serial:0};
@@ -148,12 +150,12 @@ function shuffleLegacyOrder(){
 }
 
 function pickBank(type){
- if(['linearProblem','linearProblem2','nonlinearProblem'].includes(type))return pickOriginalProblem(type,banks[type]);
- if(type==='linear3'){if(!decks[type]?.length)decks[type]=linear3Deck();const index=decks[type].pop();usedLast[type]=index;return banks[type][index];}
- let deck=decks[type];
- if(!deck||deck.length===0){deck=banks[type].map((_,i)=>i);for(let i=deck.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}if(deck.length>1&&deck.at(-1)===usedLast[type]) [deck[0],deck[deck.length-1]]=[deck.at(-1),deck[0]];decks[type]=deck}
- const i=deck.pop();usedLast[type]=i;return banks[type][i];
+ const remaining=unseenQuestions(type);
+ if(!remaining.length)return null;
+ return rememberQuestion(remaining[Math.floor(Math.random()*remaining.length)]);
 }
+// La versión de seguimiento usa el mismo historial que todas las pestañas.
+pick=function(id){const q=pickBank(legacyTopics[id]);return q?(pool[id].find(item=>item.id===q.id)||{...q,s:q.steps.map(M).join('<br>')+'<br>'+M(q.result)}):null;};
 const choice = a => a[Math.floor(Math.random()*a.length)];
 function drawTabs(){
  document.getElementById('format-tabs').innerHTML=formats.map(f=>`<button type="button" class="format-tab" id="tab-${f.id}" role="tab" aria-controls="generator-panel" aria-selected="${f.id===activeFormat}" tabindex="${f.id===activeFormat?0:-1}" data-format="${f.id}">${f.label}</button>`).join('');
@@ -163,15 +165,15 @@ function drawTabs(){
  }
 }
 function drawStages(){
- document.getElementById('taught-controls').innerHTML=Object.entries(stages).filter(([id])=>['algebra','systems','trigonometry','geometry'].includes(id)).map(([id,v])=>`<label><input type="checkbox" data-stage="${id}" ${taught[id]?'checked':''}> ${v[0]}</label>`).join('');
+ document.getElementById('taught-controls').innerHTML=Object.entries(stages).filter(([id])=>['algebra','systems','inequalities','trigonometry','geometry'].includes(id)).map(([id,v])=>`<label><input type="checkbox" data-stage="${id}" ${taught[id]?'checked':''}> ${v[0]}</label>`).join('');
  document.querySelectorAll('[data-stage]').forEach(el=>el.onchange=()=>{taught[el.dataset.stage]=el.checked;try{localStorage.setItem('bach-taught-v1',JSON.stringify(taught))}catch(e){}currentMemory().paper=null;savedLegacy.exam='';drawFormat();});
 }
 function drawTopics(){
  const state=currentMemory();
  document.getElementById('controls').innerHTML=typesFor().map(type=>{
-  if(!(type in state.chosen))state.chosen[type]=type==='linearProblem2'?false:!!taught[topicInfo[type][1]];
-  const ok=available(type);
-  return `<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':banks[type][0].minutes+' min aprox.'):'Pendiente de material'}</em></label>`;
+  if(!(type in state.chosen))state.chosen[type]=activeFormat==='class50'||(type!=='linearProblem2'&&!!taught[topicInfo[type][1]]);
+  const ok=available(type), remaining=unseenQuestions(type).length;
+  return `<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
  }).join('');
  document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&!taught[topicInfo[el.dataset.topic][1]]);updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
  updateTime();
@@ -198,6 +200,7 @@ function templates(){
   return [{title:'Resuelve el problema del terreno triangular.',types:['trigTriangle'],points:4},{title:'Resuelve el problema de alturas y distancias.',types:['trigHeight'],points:4},{title:'Resuelve la ecuación trigonométrica (solución general en grados).',types:['trigEquation'],points:2}];
  }
  if(activeFormat==='exam1')return choice([
+  [{title:'Resuelve las ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic']),choice(['inequality','rationalInequality']),'inequalitySystem1','inequalitySystem2'],points:4},{title:'Plantea y resuelve el problema de Gauss.',types:['linearProblem'],points:2},{title:'Plantea y resuelve el problema de inecuaciones.',types:['inequalityProblem'],points:2},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:2}],
   [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Vectores perpendiculares.',types:['unitVector'],points:1.25}],
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem','linearProblem2','nonlinearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
  ]);
@@ -216,10 +219,78 @@ function makePlan(draw=false){
  // Si no queda ningún apartado del modelo, se practica la selección manual.
  if(!plan.length && selectedSet.size){const fallback=[...selectedSet];plan.push({title:'Resuelve los apartados seleccionados.',types:fallback,points:10,fullCount:fallback.length});}
  if(draw){
-  for(const block of plan)block.questions=shuffledItems(block.types.map(type=>({type,...pickBank(type)})),memoryKey()+':'+block.title);
-  return shuffledItems(plan,memoryKey()+':blocks');
+  for(const block of plan){block.questions=shuffledItems(block.types.map(type=>{const q=pickBank(type);return q?{type,...q}:null}).filter(Boolean),memoryKey()+':'+block.title);block.types=block.questions.map(q=>q.type);}
+  return shuffledItems(plan.filter(b=>b.questions.length),memoryKey()+':blocks');
  }
  return plan;
+}
+const classOperationTypes=new Set(['inequality','rationalInequality','inequalitySystem1','inequalitySystem2']);
+const classProblemTypes=new Set(['linearProblem','inequalityProblem']);
+function makeClass50(){
+ const candidates=enabledTopics().map(type=>{
+  const qs=unseenQuestions(type);return qs.length?{type,...qs[Math.floor(Math.random()*qs.length)]}:null;
+ }).filter(Boolean);
+ const options=[];
+ for(let mask=1;mask<2**candidates.length;mask++){
+  const qs=candidates.filter((_,i)=>mask&(1<<i));
+  if(qs.some(q=>q.type==='inequality')&&qs.some(q=>q.type==='rationalInequality'))continue;
+  const work=qs.reduce((sum,q)=>sum+q.minutes,0);
+  if(work>45)continue;
+  const balanced=qs.some(q=>classOperationTypes.has(q.type))&&qs.some(q=>classProblemTypes.has(q.type));
+  const coverage=qs.reduce((sum,q)=>sum+1/(1+(sessionHistory.coverage[q.type]||0)),0);
+  options.push({qs,work,balanced,coverage});
+ }
+ if(!options.length)return null;
+ const full=options.filter(o=>o.work>=40&&o.balanced);
+ if(!full.length&&enabledTopics().length>=4)return null;
+ const pool=full.length?full:options.filter(o=>o.work===Math.max(...options.map(v=>v.work)));
+ // Favorecer los contenidos menos practicados, con desempate aleatorio.
+ const weights=pool.map(o=>Math.exp(o.coverage*2));let draw=Math.random()*weights.reduce((a,b)=>a+b,0),selected=pool.at(-1);
+ for(let i=0;i<pool.length;i++){draw-=weights[i];if(draw<=0){selected=pool[i];break;}}
+ const qs=selected.qs.map(rememberQuestion),blocks=[];
+ const operations=qs.filter(q=>classOperationTypes.has(q.type));
+ if(operations.length)blocks.push({title:'Resuelve las siguientes inecuaciones y sistemas.'+(operations.some(q=>q.type==='inequalitySystem2')?' Representa la solución del sistema con dos incógnitas.':''),questions:shuffledItems(operations,'class50:operations')});
+ for(const q of qs.filter(q=>!classOperationTypes.has(q.type)))blocks.push({title:q.type==='linear3'?'Resuelve el sistema de tres ecuaciones y tres incógnitas. Clasifícalo y parametriza si es SCI.':q.type==='linearProblem'?'Plantea y resuelve el problema por el método de Gauss.':'Plantea y resuelve el problema de inecuaciones.',questions:[q]});
+ let allocated=0;
+ const ordered=shuffledItems(blocks,'class50:blocks');
+ ordered.forEach((b,i)=>{b.types=b.questions.map(q=>q.type);b.score=i===ordered.length-1?+(10-allocated).toFixed(2):+(10*b.questions.reduce((n,q)=>n+q.minutes,0)/selected.work).toFixed(2);allocated+=b.score;});
+ const time=full.length?50:Math.min(50,selected.work+5);
+ return {blocks:ordered,time,workTime:selected.work,reviewTime:time-selected.work,serial:++serial,partial:!full.length};
+}
+function updateTime(){
+ if(activeFormat==='class50'){document.getElementById('duration').innerHTML='<strong>50 min</strong><small>Alterna contenidos: 40–45 min de trabajo y 5–10 min de revisión. Sin repetir ejercicios en esta pestaña.</small>';return;}
+ const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';
+}
+function showExhausted(){
+ if(!enabledTopics().length){activePaper=null;currentMemory().paper=null;document.getElementById('exam').innerHTML='<div class="empty">Selecciona al menos un contenido para crear el simulacro.</div>';document.getElementById('solution-body').innerHTML='';document.getElementById('solutions').hidden=true;document.getElementById('status').textContent='Selecciona al menos un contenido.';document.getElementById('summary-count').textContent='0';document.getElementById('summary-time').textContent='0 min';return;}
+ activePaper=null;currentMemory().paper=null;
+ document.getElementById('exam').innerHTML='<div class="empty">No quedan ejercicios nuevos suficientes para formar este simulacro sin repetir. Has completado las combinaciones disponibles en esta pestaña. Selecciona otros contenidos para seguir practicando.</div>';
+ document.getElementById('solution-body').innerHTML='';document.getElementById('solutions').hidden=true;
+ document.getElementById('summary-count').textContent='0';document.getElementById('summary-time').textContent='0 min';
+ document.getElementById('status').textContent='Banco completado: no se repiten ejercicios.';
+}
+function regionSolution(q){
+ const v=q.verification;if(!v?.halfplanes)return '';
+ const number=s=>{const p=String(s).split('/');return Number(p[0])/(p[1]?Number(p[1]):1);};
+ const pts=v.vertices.map(v=>v.point.map(number));const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ const padX=v.bounded?Math.max(1.3,(Math.max(...xs)-Math.min(...xs))*.24):5,padY=v.bounded?Math.max(1.3,(Math.max(...ys)-Math.min(...ys))*.24):5;
+ const x0=Math.min(...xs)-padX,x1=Math.max(...xs)+padX,y0=Math.min(...ys)-padY,y1=Math.max(...ys)+padY;
+ let polygon=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+ for(const [a,b,c] of v.halfplanes){
+  const next=[];for(let i=0;i<polygon.length;i++){const p=polygon[i],r=polygon[(i+1)%polygon.length],fp=a*p[0]+b*p[1]-c,fr=a*r[0]+b*r[1]-c;if(fp<=1e-9)next.push(p);if((fp>1e-9)!==(fr>1e-9)){const t=fp/(fp-fr);next.push([p[0]+t*(r[0]-p[0]),p[1]+t*(r[1]-p[1])]);}}polygon=next;
+ }
+ const X=x=>44+(x-x0)/(x1-x0)*512,Y=y=>350-(y-y0)/(y1-y0)*320;
+ let svg='<svg class="region-graph" viewBox="0 0 600 400" role="img" aria-label="Región solución sombreada; fronteras estrictas discontinuas">';
+ svg+='<defs><clipPath id="clip-'+q.id+'"><rect x="44" y="30" width="512" height="320"/></clipPath></defs>';
+ for(let i=0;i<=8;i++){const x=x0+(x1-x0)*i/8,y=y0+(y1-y0)*i/8;svg+=`<path d="M ${X(x)} 30 V 350 M 44 ${Y(y)} H 556" stroke="#e4eaf0"/><text x="${X(x)}" y="369" text-anchor="middle">${x.toFixed(1)}</text><text x="37" y="${Y(y)+4}" text-anchor="end">${y.toFixed(1)}</text>`;}
+ svg+='<g clip-path="url(#clip-'+q.id+')">';
+ svg+='<polygon points="'+polygon.map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#bdd9ef"/>';
+ for(const [a,b,c,strict] of v.halfplanes){const p=b?[x0,(c-a*x0)/b]:[c/a,y0],r=b?[x1,(c-a*x1)/b]:[c/a,y1];svg+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(r[0])}" y2="${Y(r[1])}" stroke="#315f80" stroke-width="2" ${strict?'stroke-dasharray="7 5"':''}/>`;}
+ if(x0<=0&&x1>=0)svg+=`<path d="M ${X(0)} 30 V 350" stroke="#8495a3"/>`;
+ if(y0<=0&&y1>=0)svg+=`<path d="M 44 ${Y(0)} H 556" stroke="#8495a3"/>`;
+ for(const p of v.vertices)svg+=`<circle cx="${X(number(p.point[0]))}" cy="${Y(number(p.point[1]))}" r="3.5" fill="${p.included?'#20465d':'white'}" stroke="#20465d"/>`;
+ svg+='</g><text x="570" y="370">x</text><text x="23" y="20">y</text></svg>';
+ return svg+'<p class="graph-key">Azul: solución · Continua: frontera incluida · Discontinua: excluida.</p><p>Vértices de la frontera: '+v.vertices.map(p=>M('('+p.point.map(s=>s.includes('/')?'\\frac{'+s.split('/')[0]+'}{'+s.split('/')[1]+'}':s).join(',')+')')+' '+(p.included?'incluido':'excluido')).join('; ')+'.</p>';
 }
 function updateTime(){const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';}
 function mathTypeset(){
@@ -238,12 +309,12 @@ function displayPaper(paper){
  document.getElementById('summary-time').textContent=paper.time+' min';
  const personal=document.querySelector('.site-cc img').src, logo=document.getElementById('brand-logo').src;
  const date=new Intl.DateTimeFormat('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
- let h=`<div class="paper-brand"><div class="print-logos"><img src="${logo}" alt="Colegio Punta Galea"><img class="personal-print" src="${personal}" alt="Maite · Matemáticas"></div><span>MATEMÁTICAS · 1.º BACHILLERATO<br>${esc(titleCase[activeFormat])}</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>${activeFormat.startsWith('class')?'SIMULACRO · NOTA DE CLASE':activeFormat.startsWith('exam')?'SIMULACRO DE EVALUACIÓN':'SIMULACRO DE SEGUIMIENTO'}</h2><div class="sub">${paper.time} minutos aprox. · ${'10 puntos'}</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: ${date}</span></div>`;
+ let h=`<div class="paper-brand"><div class="print-logos"><img src="${logo}" alt="Colegio Punta Galea"><img class="personal-print" src="${personal}" alt="Maite · Matemáticas"></div><span>MATEMÁTICAS · 1.º BACHILLERATO<br>${esc(titleCase[activeFormat])}</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>${activeFormat.startsWith('class')?'SIMULACRO · NOTA DE CLASE':activeFormat.startsWith('exam')?'SIMULACRO DE EVALUACIÓN':'SIMULACRO DE SEGUIMIENTO'}</h2><div class="sub">${paper.time} minutos aprox. · 10 puntos${paper.reviewTime?' · '+paper.reviewTime+' min para revisión':''}</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: ${date}</span></div>`;
  
  let sol='';
  paper.blocks.forEach((b,i)=>{
   h+=`<section class="exam-block"><h3>${i+1}. ${b.title} <span class="points">(${b.score.toFixed(2).replace('.',',')} puntos)</span></h3><ol class="exam-list">`;
-  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${((Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div>${sourceCaption(q)}</article>`;});
+  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${((Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div>${regionSolution(q)}${sourceCaption(q)}${q.sourceNote?'<p class="source-caption">'+esc(q.sourceNote)+'</p>':''}</article>`;});
   h+='</ol></section>';
  });
  document.getElementById('exam').innerHTML=h;
@@ -257,10 +328,12 @@ function displayPaper(paper){
 function createPaper(){
  const f=formats.find(f=>f.id===activeFormat);
  if(f.pending)return;
+ if(activeFormat==='class50'){const paper=makeClass50();if(paper){currentMemory().paper=paper;displayPaper(paper);}else showExhausted();return;}
  if(activeFormat==='follow1'&&followModel==='original'){
-  legacyRender();shuffleLegacyOrder();mathTypeset();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
+  const selectedBefore={...selected};for(const section of sections)if(!unseenQuestions(legacyTopics[section.id]).length)selected[section.id]=false;legacyRender();selected=selectedBefore;shuffleLegacyOrder();mathTypeset();savedLegacy.selected={...selected};savedLegacy.exam=document.getElementById('exam').innerHTML;savedLegacy.solution=document.getElementById('solution-body').innerHTML;savedLegacy.actual={...actual};savedLegacy.status=document.getElementById('status').textContent;savedLegacy.side=document.getElementById('coverage-side').innerHTML;savedLegacy.count=document.getElementById('summary-count').textContent;savedLegacy.time=document.getElementById('summary-time').textContent;return;
  }
  const blocks=makePlan(true);
+ if(!blocks.length&&enabledTopics().length){showExhausted();return;}
  if(!blocks.length){currentMemory().paper=null;document.getElementById('coverage-side').innerHTML=typesFor().map(t=>`<div class="coverage-row omitted"><span class="mini-icon">✕</span><span>${topicInfo[t][0]}</span><b>Omitido</b></div>`).join('');document.getElementById('duration').innerHTML='Tiempo estimado: <strong>0 min</strong>';document.getElementById('exam').innerHTML='<div class="empty">Selecciona al menos un contenido trabajado para crear el simulacro.</div>';document.getElementById('solution-body').innerHTML='';document.getElementById('solutions').hidden=true;document.getElementById('summary-count').textContent='0';document.getElementById('summary-time').textContent='0 min';document.getElementById('status').textContent='No hay contenidos activos seleccionados.';return;}
  const rawTotal=blocks.reduce((n,b)=>n+b.points*b.types.length/b.fullCount,0);
  let allocated=0;
@@ -288,8 +361,8 @@ function drawFormat(){
  const fm=document.getElementById('follow-model');if(fm){fm.value=followModel;fm.onchange=()=>{savedLegacy.selected={...selected};followModel=fm.value;drawFormat();};}
  const cu=document.getElementById('class-unit');if(cu){cu.value=classUnit;cu.onchange=()=>{classUnit=cu.value;drawFormat();};}
  document.querySelector('.config .section-head h2').textContent='Contenidos del simulacro';
- document.querySelector('.config .section-head p').textContent='Marca los contenidos que pueden entrar. El modelo combina los contenidos habituales; los opcionales que marques se incluyen siempre.';
- document.querySelector('.planning-note').innerHTML=activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
+ document.querySelector('.config .section-head p').textContent='Marca los contenidos que pueden entrar. La nota de clase actual alterna entre ellos para ajustarse a 50 minutos. Los demás formatos mantienen su estructura habitual.';
+ document.querySelector('.planning-note').innerHTML=activeFormat==='class50'?'Cada modelo combina parte de los contenidos marcados y reserva tiempo para revisar. Las preguntas se eligen <b>al azar y sin repetición mientras siga abierta esta pestaña</b>. Al agotar un banco se avisa.':activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
  if(activeFormat==='follow1'&&followModel==='original'){
   selected={...savedLegacy.selected};legacyDraw();
   if(savedLegacy.exam){document.getElementById('exam').innerHTML=savedLegacy.exam;document.getElementById('solution-body').innerHTML=savedLegacy.solution;actual={...savedLegacy.actual};document.getElementById('coverage-side').innerHTML=savedLegacy.side;document.getElementById('summary-count').textContent=savedLegacy.count;document.getElementById('summary-time').textContent=savedLegacy.time;document.getElementById('status').textContent=savedLegacy.status;document.getElementById('solutions').hidden=true;document.getElementById('toggle-sols').textContent='Ver soluciones';}
