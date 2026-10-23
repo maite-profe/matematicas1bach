@@ -96,8 +96,8 @@ try{taught=JSON.parse(localStorage.getItem('bach-taught-v1')||'{}')}catch(e){}
 for(const [id,value] of Object.entries(stages)) if(typeof taught[id]!=='boolean')taught[id]=value[1];
 const currentClassTopics=['linear3','linearProblem','inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem'];
 const formats=[
- {id:'class50',label:'Nota de clase actual · 50 min',topics:currentClassTopics,description:'Práctica de la próxima nota de clase: sistemas de tres incógnitas, problemas de Gauss, inecuaciones y sus problemas. Cada simulacro alterna contenidos para ajustarse a 50 minutos, con tiempo de revisión.'},
  {id:'follow1',label:'Seguimiento · 1.ª evaluación',legacy:true,description:'Se conserva el generador que ya utilizabas: ecuaciones, sistemas no lineales, intervalos y problema. Puedes elegir también los modelos de seguimiento de los exámenes aportados.'},
+ {id:'class50',label:'Nota de clase 1ª Evaluación',topics:currentClassTopics,description:'Práctica de la próxima nota de clase: sistemas de tres incógnitas, problemas de Gauss, inecuaciones y sus problemas. Cada simulacro alterna contenidos para ajustarse a 50 minutos, con tiempo de revisión.'},
  {id:'class1',label:'Nota de clase · 1.ª evaluación',description:'Pruebas breves con un formato propio: ecuaciones, sistemas o trigonometría, según la unidad.'},
  {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Combina álgebra, sistemas, problemas, trigonometría y geometría. La distribución varía entre los modelos de los exámenes aportados.'},
  {id:'follow2',label:'Seguimiento · 2.ª evaluación',topics:['functions','absoluteFunction','quadraticProfit','continuity','continuityParam','limits'],description:'Formato de funciones, continuidad, límites y problemas. Los exámenes de distintos años incluyen combinaciones diferentes.'},
