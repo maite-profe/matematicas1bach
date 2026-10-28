@@ -80,6 +80,18 @@ function rememberQuestion(q){
  try{sessionStorage.setItem(historyStorageKey,JSON.stringify(sessionHistory));}catch(e){}
  return q;
 }
+function sourcePriority(q){
+ const name=(q.source?.document||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ if(/examen|evaluacion|seguimiento|recuperacion|recup/.test(name))return 0;
+ if(/nota.*clase|clase.*nota/.test(name))return 1;
+ return 2;
+}
+function preferredQuestions(type){
+ const remaining=unseenQuestions(type);
+ if(!remaining.length)return [];
+ const priority=Math.min(...remaining.map(sourcePriority));
+ return remaining.filter(q=>sourcePriority(q)===priority);
+}
 function pickOriginalProblem(type,questions){return pickBank(type);}
 function sourceCaption(q){
  if(!q.source)return '';
@@ -150,7 +162,7 @@ function shuffleLegacyOrder(){
 }
 
 function pickBank(type){
- const remaining=unseenQuestions(type);
+ const remaining=preferredQuestions(type);
  if(!remaining.length)return null;
  return rememberQuestion(remaining[Math.floor(Math.random()*remaining.length)]);
 }
@@ -228,7 +240,7 @@ const classOperationTypes=new Set(['inequality','rationalInequality','inequality
 const classProblemTypes=new Set(['linearProblem','inequalityProblem']);
 function makeClass50(){
  const candidates=enabledTopics().map(type=>{
-  const qs=unseenQuestions(type);return qs.length?{type,...qs[Math.floor(Math.random()*qs.length)]}:null;
+  const qs=preferredQuestions(type);return qs.length?{type,...qs[Math.floor(Math.random()*qs.length)]}:null;
  }).filter(Boolean);
  const options=[];
  for(let mask=1;mask<2**candidates.length;mask++){
