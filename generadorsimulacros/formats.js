@@ -59,6 +59,7 @@ for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].
 const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 for(const topic of firstEvaluationTopics)banks[topic]=[];
 for(const original of FIRST_EVALUATION_CATALOG){
+ if(original.active===false)continue;
  const item={...original,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
  (banks[item.topic] ||= []).push(item);
 }
