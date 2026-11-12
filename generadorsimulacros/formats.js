@@ -110,16 +110,15 @@ for(const [id,value] of Object.entries(stages)) if(typeof taught[id]!=='boolean'
 const currentClassTopics=['linear3','linearProblem','inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem'];
 const formats=[
  {id:'follow1',label:'Seguimiento · 1.ª evaluación',legacy:true,description:'Se conserva el generador que ya utilizabas: ecuaciones, sistemas no lineales, intervalos y problema. Puedes elegir también los modelos de seguimiento de los exámenes aportados.'},
- {id:'class50',label:'Nota de clase 1ª Evaluación',topics:currentClassTopics,description:'Práctica de la próxima nota de clase: sistemas de tres incógnitas, problemas de Gauss, inecuaciones y sus problemas. Cada simulacro alterna contenidos para ajustarse a 50 minutos, con tiempo de revisión.'},
  {id:'class1',label:'Nota de clase · 1.ª evaluación',description:'Pruebas breves con un formato propio: ecuaciones, sistemas o trigonometría, según la unidad.'},
- {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Combina álgebra, sistemas, problemas, trigonometría y geometría. La distribución varía entre los modelos de los exámenes aportados.'},
+ {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Combina álgebra, sistemas, problemas, trigonometría y geometría. Los ejercicios se eligen al azar y se presentan agrupados y ordenados por temas.'},
  {id:'follow2',label:'Seguimiento · 2.ª evaluación',topics:['functions','absoluteFunction','quadraticProfit','continuity','continuityParam','limits'],description:'Formato de funciones, continuidad, límites y problemas. Los exámenes de distintos años incluyen combinaciones diferentes.'},
  {id:'class2',label:'Nota de clase · 2.ª evaluación',topics:['derivatives'],description:'Prueba breve de derivación: regla de la cadena, productos, cocientes y funciones compuestas.'},
  {id:'exam2',label:'Evaluación · 2.ª evaluación',topics:['derivatives','limits','asymptotes','asymptoteParam','continuity','study','optimization'],description:'Formato de derivadas, límites, asíntotas y continuidad, con variantes de estudio de funciones y optimización.'},
  {id:'exam3',label:'Evaluación · 3.ª evaluación',topics:['integrals','area','study','optimization','derivability','highLimit'],description:'Formato de integrales y sus aplicaciones, representación de funciones, derivabilidad, límites y optimización.'}
 ];
 const memories={}, decks={}, usedLast={};
-let activeFormat='class50',followModel='original',classUnit='equations',activePaper=null,serial=0;
+let activeFormat='follow1',followModel='original',classUnit='equations',activePaper=null,serial=0;
 const savedLegacy={selected:{...selected},actual:null,exam:'',solution:''};
 const legacyRender=render,legacyDraw=drawControls;
 const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
@@ -223,6 +222,34 @@ function templates(){
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:[choice(['polynomial','bicuadratic']),'exponential','nonlinear','radical','linear3'],points:6},{title:'Plantea y resuelve los problemas.',types:['linearProblem','nonlinearProblem'],points:4}]
  ]);
 }
+
+const firstEvaluationGroups=[
+ {id:'algebra',title:'Álgebra. Resuelve las siguientes ecuaciones.',types:['polynomial','bicuadratic','rational','radical','exponential','logarithmic','absolute','intervals']},
+ {id:'systems',title:'Sistemas de ecuaciones. Resuelve los sistemas y plantea y resuelve los problemas.',types:['classification','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']},
+ {id:'inequalities',title:'Inecuaciones. Resuelve las inecuaciones, los sistemas y los problemas.',types:['inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem']},
+ {id:'trigonometry',title:'Trigonometría. Resuelve los siguientes ejercicios y problemas.',types:['trigTriangle','trigHeight','trigEquation']},
+ {id:'geometry',title:'Geometría analítica. Resuelve los siguientes ejercicios.',types:['points','unitVector','lines']}
+];
+function groupFirstEvaluation(plan){
+ const all=plan.flatMap(block=>block.questions.map(q=>({...q,examWeight:block.points/block.fullCount})));
+ const grouped=firstEvaluationGroups.map(group=>{
+  const questions=all.filter(q=>group.types.includes(q.type)).sort((a,b)=>group.types.indexOf(a.type)-group.types.indexOf(b.type));
+  return {theme:group.id,title:group.title,questions,types:questions.map(q=>q.type),points:questions.reduce((sum,q)=>sum+q.examWeight,0),fullCount:questions.length};
+ }).filter(block=>block.questions.length);
+ const known=new Set(firstEvaluationGroups.flatMap(group=>group.types));
+ const extra=all.filter(q=>!known.has(q.type));
+ if(extra.length)grouped.push({theme:'extra',title:'Otros contenidos seleccionados.',questions:extra,types:extra.map(q=>q.type),points:extra.reduce((sum,q)=>sum+q.examWeight,0),fullCount:extra.length});
+ return grouped;
+}
+function allocateQuestionScores(block){
+ const weights=block.questions.map(q=>q.examWeight??1),sum=weights.reduce((a,b)=>a+b,0);
+ const exact=weights.map(w=>block.score*100*w/sum),cents=exact.map(Math.floor);
+ const ranked=exact.map((n,i)=>({i,remainder:n-cents[i]})).sort((a,b)=>b.remainder-a.remainder||a.i-b.i);
+ const missing=Math.round(block.score*100)-cents.reduce((a,b)=>a+b,0);
+ for(let i=0;i<missing;i++)cents[ranked[i].i]++;
+ return cents.map(n=>n/100);
+}
+
 function makePlan(draw=false){
  const state=currentMemory();const selectedSet=new Set(enabledTopics());
  const plan=templates().map(block=>({...block,types:block.types.filter(t=>selectedSet.has(t)),fullCount:block.types.length})).filter(b=>b.types.length);
@@ -233,7 +260,7 @@ function makePlan(draw=false){
  if(!plan.length && selectedSet.size){const fallback=[...selectedSet];plan.push({title:'Resuelve los apartados seleccionados.',types:fallback,points:10,fullCount:fallback.length});}
  if(draw){
   for(const block of plan){block.questions=shuffledItems(block.types.map(type=>{const q=pickBank(type);return q?{type,...q}:null}).filter(Boolean),memoryKey()+':'+block.title);block.types=block.questions.map(q=>q.type);}
-  return shuffledItems(plan.filter(b=>b.questions.length),memoryKey()+':blocks');
+  return activeFormat==='exam1'?groupFirstEvaluation(plan.filter(b=>b.questions.length)):shuffledItems(plan.filter(b=>b.questions.length),memoryKey()+':blocks');
  }
  return plan;
 }
@@ -327,7 +354,7 @@ function displayPaper(paper){
  let sol='';
  paper.blocks.forEach((b,i)=>{
   h+=`<section class="exam-block"><h3>${i+1}. ${b.title} <span class="points">(${b.score.toFixed(2).replace('.',',')} puntos)</span></h3><ol class="exam-list">`;
-  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${((Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div>${regionSolution(q)}${sourceCaption(q)}${q.sourceNote?'<p class="source-caption">'+esc(q.sourceNote)+'</p>':''}</article>`;});
+  b.questions.forEach((q,j)=>{h+=`<li>${q.q} <span class="item-points">(${(b.questionScores?b.questionScores[j]:(Math.floor(b.score*100/b.questions.length)+(j<Math.round(b.score*100)%b.questions.length?1:0))/100).toFixed(2).replace('.',',')} p.)</span></li>`;sol+=`<article class="solution-box"><h3>${i+1}.${letters(j)} · ${topicInfo[q.type][0]}</h3>${q.steps.map(D).join('')}<div class="result">${D(q.result)}</div>${regionSolution(q)}${sourceCaption(q)}${q.sourceNote?'<p class="source-caption">'+esc(q.sourceNote)+'</p>':''}</article>`;});
   h+='</ol></section>';
  });
  document.getElementById('exam').innerHTML=h;
@@ -351,6 +378,7 @@ function createPaper(){
  const rawTotal=blocks.reduce((n,b)=>n+b.points*b.types.length/b.fullCount,0);
  let allocated=0;
  blocks.forEach((b,i)=>{b.score=i===blocks.length-1?+(10-allocated).toFixed(2):+(10*b.points*b.types.length/b.fullCount/rawTotal).toFixed(2);allocated+=b.score;});
+ if(activeFormat==='exam1')blocks.forEach(b=>b.questionScores=allocateQuestionScores(b));
  const qs=blocks.flatMap(b=>b.questions);
  const paper={blocks,time:qs.reduce((n,q)=>n+q.minutes,0),serial:++serial,partial:false};
  const state=currentMemory();state.paper=paper;displayPaper(paper);
@@ -374,8 +402,8 @@ function drawFormat(){
  const fm=document.getElementById('follow-model');if(fm){fm.value=followModel;fm.onchange=()=>{savedLegacy.selected={...selected};followModel=fm.value;drawFormat();};}
  const cu=document.getElementById('class-unit');if(cu){cu.value=classUnit;cu.onchange=()=>{classUnit=cu.value;drawFormat();};}
  document.querySelector('.config .section-head h2').textContent='Contenidos del simulacro';
- document.querySelector('.config .section-head p').textContent='Marca los contenidos que pueden entrar. La nota de clase actual alterna entre ellos para ajustarse a 50 minutos. Los demás formatos mantienen su estructura habitual.';
- document.querySelector('.planning-note').innerHTML=activeFormat==='class50'?'Cada modelo combina parte de los contenidos marcados y reserva tiempo para revisar. Las preguntas se eligen <b>al azar y sin repetición mientras siga abierta esta pestaña</b>. Al agotar un banco se avisa.':activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
+ document.querySelector('.config .section-head p').textContent='Marca los contenidos que pueden entrar. Cada formato conserva su estructura; el examen de primera evaluación agrupa los ejercicios por temas.';
+ document.querySelector('.planning-note').innerHTML=activeFormat==='exam1'?'Los ejercicios se eligen <b>al azar y sin repetición durante la sesión</b> y se presentan por bloques: <b>álgebra, sistemas, inecuaciones, trigonometría y geometría analítica</b>. Los bloques sin ejercicios seleccionados se omiten.':activeFormat==='class50'?'Cada modelo combina parte de los contenidos marcados y reserva tiempo para revisar. Las preguntas se eligen <b>al azar y sin repetición mientras siga abierta esta pestaña</b>. Al agotar un banco se avisa.':activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
  if(activeFormat==='follow1'&&followModel==='original'){
   selected={...savedLegacy.selected};legacyDraw();
   if(savedLegacy.exam){document.getElementById('exam').innerHTML=savedLegacy.exam;document.getElementById('solution-body').innerHTML=savedLegacy.solution;actual={...savedLegacy.actual};document.getElementById('coverage-side').innerHTML=savedLegacy.side;document.getElementById('summary-count').textContent=savedLegacy.count;document.getElementById('summary-time').textContent=savedLegacy.time;document.getElementById('status').textContent=savedLegacy.status;document.getElementById('solutions').hidden=true;document.getElementById('toggle-sols').textContent='Ver soluciones';}
