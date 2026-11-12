@@ -125,7 +125,7 @@ const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
  if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']:['trigTriangle','trigHeight','trigEquation'];
- if(activeFormat==='exam1') return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
+ if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","linearProblem2","nonlinearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigTriangle","trigHeight","trigEquation","points","unitVector","lines"];
  return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
@@ -182,10 +182,15 @@ function drawStages(){
 }
 function drawTopics(){
  const state=currentMemory();
+ const topicGroups={algebra:'Álgebra',systems:'Sistemas de ecuaciones',inequalities:'Inecuaciones',trigonometry:'Trigonometría',geometry:'Geometría analítica'};
+ let previousGroup='';
  document.getElementById('controls').innerHTML=typesFor().map(type=>{
+  const group=activeFormat==='exam1'?firstEvaluationGroups.find(g=>g.types.includes(type)):null;
+  const heading=group&&group.id!==previousGroup?'<h3 class="group-title">'+topicGroups[group.id]+'</h3>':'';
+  if(group)previousGroup=group.id;
   if(!(type in state.chosen))state.chosen[type]=activeFormat==='class50'||(type!=='linearProblem2'&&!!taught[topicInfo[type][1]]);
   const ok=available(type), remaining=unseenQuestions(type).length;
-  return `<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
+  return heading+`<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
  }).join('');
  document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&!taught[topicInfo[el.dataset.topic][1]]);updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
  updateTime();
