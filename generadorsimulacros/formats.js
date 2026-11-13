@@ -317,7 +317,14 @@ function showExhausted(){
 function regionSolution(q){
  const v=q.verification;if(!v?.halfplanes)return '';
  const number=s=>{const p=String(s).split('/');return Number(p[0])/(p[1]?Number(p[1]):1);};
- const pts=v.vertices.map(v=>v.point.map(number));const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ const pts=v.vertices.map(v=>v.point.map(number));
+ // Las franjas entre paralelas no tienen vértices: encuadrar con un punto factible y los cortes con los ejes.
+ if(!pts.length){
+  if(v.feasiblePoint)pts.push(v.feasiblePoint.map(number));
+  for(const [a,b,c] of v.halfplanes){if(a)pts.push([c/a,0]);if(b)pts.push([0,c/b]);}
+  if(!pts.length)pts.push([0,0]);
+ }
+ const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
  const padX=v.bounded?Math.max(1.3,(Math.max(...xs)-Math.min(...xs))*.24):5,padY=v.bounded?Math.max(1.3,(Math.max(...ys)-Math.min(...ys))*.24):5;
  const x0=Math.min(...xs)-padX,x1=Math.max(...xs)+padX,y0=Math.min(...ys)-padY,y1=Math.max(...ys)+padY;
  let polygon=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
@@ -335,7 +342,7 @@ function regionSolution(q){
  if(y0<=0&&y1>=0)svg+=`<path d="M 44 ${Y(0)} H 556" stroke="#8495a3"/>`;
  for(const p of v.vertices)svg+=`<circle cx="${X(number(p.point[0]))}" cy="${Y(number(p.point[1]))}" r="3.5" fill="${p.included?'#20465d':'white'}" stroke="#20465d"/>`;
  svg+='</g><text x="570" y="370">x</text><text x="23" y="20">y</text></svg>';
- return svg+'<p class="graph-key">Azul: solución · Continua: frontera incluida · Discontinua: excluida.</p><p>Vértices de la frontera: '+v.vertices.map(p=>M('('+p.point.map(s=>s.includes('/')?'\\frac{'+s.split('/')[0]+'}{'+s.split('/')[1]+'}':s).join(',')+')')+' '+(p.included?'incluido':'excluido')).join('; ')+'.</p>';
+ return (svg+'<p class="graph-key">Azul: solución · Continua: frontera incluida · Discontinua: excluida.</p><p>Vértices de la frontera: '+v.vertices.map(p=>M('('+p.point.map(s=>s.includes('/')?'\\frac{'+s.split('/')[0]+'}{'+s.split('/')[1]+'}':s).join(',')+')')+' '+(p.included?'incluido':'excluido')).join('; ')+'.</p>').replace('Vértices de la frontera: .','La región no tiene vértices.');
 }
 function updateTime(){const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';}
 function mathTypeset(){
