@@ -56,15 +56,15 @@ for(let k=1;k<=12;k++) {
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
 // Catálogo de la primera evaluación: solo ejercicios contrastados con una fuente.
-const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
+const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','trigTriangle','trigHeight','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 for(const topic of firstEvaluationTopics)banks[topic]=[];
 for(const original of FIRST_EVALUATION_CATALOG){
  if(original.active===false)continue;
- const item={...original,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
+ const item={...original,originalTopic:original.topic,topic:['linearProblem','linearProblem2','nonlinearProblem'].includes(original.topic)?'linearProblem':original.topic,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
  (banks[item.topic] ||= []).push(item);
 }
 // El formato original comparte exactamente el mismo catálogo, sin copias divergentes.
-const legacyTopics={algebra:'polynomial',degree:'bicuadratic',rational:'rational',radical:'radical',exp:'exponential',log:'logarithmic',systems:'nonlinear',intervals:'intervals',abs:'absolute',problem:'nonlinearProblem'};
+const legacyTopics={algebra:'polynomial',degree:'bicuadratic',rational:'rational',radical:'radical',exp:'exponential',log:'logarithmic',systems:'nonlinear',intervals:'intervals',abs:'absolute',problem:'linearProblem'};
 for(const [legacy,topic] of Object.entries(legacyTopics))pool[legacy]=banks[topic].map(q=>({...q,s:q.steps.map(M).join('<br>')+'<br>'+M(q.result)}));
 sections=sections.filter(section=>pool[section.id]?.length);
 selected=Object.fromEntries(sections.map(section=>[section.id,true]));
@@ -101,7 +101,7 @@ function sourceCaption(q){
 
 const topicInfo={
   inequality:['Inecuaciones','inequalities'],inequalitySystem1:['Sistemas de inecuaciones con una incógnita','inequalities'],inequalitySystem2:['Sistemas de inecuaciones con dos incógnitas','inequalities'],rationalInequality:['Inecuaciones con fracciones algebraicas','inequalities'],inequalityProblem:['Problemas de inecuaciones','inequalities'],
-  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de tres incógnitas','systems'],linearProblem2:['Problemas de dos incógnitas','systems'],nonlinearProblem:['Problemas de sistemas no lineales','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
+  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas de ecuaciones','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigTriangle:['Triángulos: senos y cosenos','trigonometry'],trigHeight:['Alturas y distancias','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
 };
 const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],inequalities:['Inecuaciones y sistemas de inecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
 let taught={};
@@ -124,9 +124,9 @@ const legacyRender=render,legacyDraw=drawControls;
 const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
- if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']:['trigTriangle','trigHeight','trigEquation'];
- if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","linearProblem2","nonlinearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigTriangle","trigHeight","trigEquation","points","unitVector","lines"];
- return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
+ if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem']:['trigTriangle','trigHeight','trigEquation'];
+ if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigTriangle","trigHeight","trigEquation","points","unitVector","lines"];
+ return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
 const currentMemory=()=>memories[memoryKey()] ||= {chosen:{},forced:{},paper:null,serial:0};
@@ -188,7 +188,7 @@ function drawTopics(){
   const group=activeFormat==='exam1'?firstEvaluationGroups.find(g=>g.types.includes(type)):null;
   const heading=group&&group.id!==previousGroup?'<h3 class="group-title">'+topicGroups[group.id]+'</h3>':'';
   if(group)previousGroup=group.id;
-  if(!(type in state.chosen))state.chosen[type]=activeFormat==='class50'||(type!=='linearProblem2'&&!!taught[topicInfo[type][1]]);
+  if(!(type in state.chosen))state.chosen[type]=activeFormat==='class50'||!!taught[topicInfo[type][1]];
   const ok=available(type), remaining=unseenQuestions(type).length;
   return heading+`<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
  }).join('');
@@ -213,24 +213,24 @@ function templates(){
 
  if(activeFormat==='class1') {
   if(classUnit==='equations')return [{title:'Resuelve las siguientes ecuaciones.',types:['rational','radical','exponential','logarithmic'],points:8},{title:'Resuelve y expresa la solución como intervalo.',types:['absolute'],points:2}];
-  if(classUnit==='systems')return [{title:'Resuelve los siguientes sistemas.',types:['linear3','nonlinear'],points:4},{title:'Plantea y resuelve los siguientes problemas.',types:['linearProblem','nonlinearProblem'],points:6}];
+  if(classUnit==='systems')return [{title:'Resuelve los siguientes sistemas.',types:['linear3','nonlinear'],points:4},{title:'Plantea y resuelve los siguientes problemas.',types:['linearProblem','linearProblem'],points:6}];
   return [{title:'Resuelve el problema del terreno triangular.',types:['trigTriangle'],points:4},{title:'Resuelve el problema de alturas y distancias.',types:['trigHeight'],points:4},{title:'Resuelve la ecuación trigonométrica (solución general en grados).',types:['trigEquation'],points:2}];
  }
  if(activeFormat==='exam1')return choice([
-  [{title:'Resuelve las ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic']),choice(['inequality','rationalInequality']),'inequalitySystem1','inequalitySystem2'],points:4},{title:'Plantea y resuelve el problema de Gauss.',types:['linearProblem'],points:2},{title:'Plantea y resuelve el problema de inecuaciones.',types:['inequalityProblem'],points:2},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:2}],
+  [{title:'Resuelve las ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic']),choice(['inequality','rationalInequality']),'inequalitySystem1','inequalitySystem2'],points:4},{title:'Plantea y resuelve el problema de sistemas de ecuaciones.',types:['linearProblem'],points:2},{title:'Plantea y resuelve el problema de inecuaciones.',types:['inequalityProblem'],points:2},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:2}],
   [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Vectores perpendiculares.',types:['unitVector'],points:1.25}],
-  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem','linearProblem2','nonlinearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
+  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigTriangle','trigHeight'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
  ]);
  return choice([
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3','exponential','logarithmic','rational'],points:5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:3},{title:'Clasifica los sistemas.',types:['classification'],points:2}],
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['rational','exponential','radical','nonlinear','linear3','absolute'],points:7.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:2.5}],
-  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:[choice(['polynomial','bicuadratic']),'exponential','nonlinear','radical','linear3'],points:6},{title:'Plantea y resuelve los problemas.',types:['linearProblem','nonlinearProblem'],points:4}]
+  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:[choice(['polynomial','bicuadratic']),'exponential','nonlinear','radical','linear3'],points:6},{title:'Plantea y resuelve los problemas.',types:['linearProblem','linearProblem'],points:4}]
  ]);
 }
 
 const firstEvaluationGroups=[
  {id:'algebra',title:'Álgebra. Resuelve las siguientes ecuaciones.',types:['polynomial','bicuadratic','rational','radical','exponential','logarithmic','absolute','intervals']},
- {id:'systems',title:'Sistemas de ecuaciones. Resuelve los sistemas y plantea y resuelve los problemas.',types:['classification','linear3','nonlinear','linearProblem','linearProblem2','nonlinearProblem']},
+ {id:'systems',title:'Sistemas de ecuaciones. Resuelve los sistemas y plantea y resuelve los problemas.',types:['classification','linear3','nonlinear','linearProblem']},
  {id:'inequalities',title:'Inecuaciones. Resuelve las inecuaciones, los sistemas y los problemas.',types:['inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem']},
  {id:'trigonometry',title:'Trigonometría. Resuelve los siguientes ejercicios y problemas.',types:['trigTriangle','trigHeight','trigEquation']},
  {id:'geometry',title:'Geometría analítica. Resuelve los siguientes ejercicios.',types:['points','unitVector','lines']}
@@ -295,7 +295,7 @@ function makeClass50(){
  const qs=selected.qs.map(rememberQuestion),blocks=[];
  const operations=qs.filter(q=>classOperationTypes.has(q.type));
  if(operations.length)blocks.push({title:'Resuelve las siguientes inecuaciones y sistemas.'+(operations.some(q=>q.type==='inequalitySystem2')?' Representa la solución del sistema con dos incógnitas.':''),questions:shuffledItems(operations,'class50:operations')});
- for(const q of qs.filter(q=>!classOperationTypes.has(q.type)))blocks.push({title:q.type==='linear3'?'Resuelve el sistema de tres ecuaciones y tres incógnitas. Clasifícalo y parametriza si es SCI.':q.type==='linearProblem'?'Plantea y resuelve el problema por el método de Gauss.':'Plantea y resuelve el problema de inecuaciones.',questions:[q]});
+ for(const q of qs.filter(q=>!classOperationTypes.has(q.type)))blocks.push({title:q.type==='linear3'?'Resuelve el sistema de tres ecuaciones y tres incógnitas. Clasifícalo y parametriza si es SCI.':q.type==='linearProblem'?'Plantea y resuelve el problema de sistemas de ecuaciones.':'Plantea y resuelve el problema de inecuaciones.',questions:[q]});
  let allocated=0;
  const ordered=shuffledItems(blocks,'class50:blocks');
  ordered.forEach((b,i)=>{b.types=b.questions.map(q=>q.type);b.score=i===ordered.length-1?+(10-allocated).toFixed(2):+(10*b.questions.reduce((n,q)=>n+q.minutes,0)/selected.work).toFixed(2);allocated+=b.score;});
