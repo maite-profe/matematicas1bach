@@ -111,8 +111,8 @@ for(const [id,value] of Object.entries(stages)) if(typeof taught[id]!=='boolean'
 const currentClassTopics=['linear3','linearProblem','inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem'];
 const formats=[
  {id:'follow1',label:'Seguimiento · 1.ª evaluación',legacy:true,description:'Se conserva el generador que ya utilizabas: ecuaciones, sistemas no lineales, intervalos y problema. Puedes elegir también los modelos de seguimiento de los exámenes aportados.'},
- {id:'class1',label:'Nota de clase · 1.ª evaluación',description:'Pruebas breves con un formato propio: ecuaciones, sistemas o trigonometría, según la unidad.'},
- {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Combina álgebra, sistemas, problemas, trigonometría y geometría. Los ejercicios se eligen al azar y se presentan agrupados y ordenados por temas.'},
+ {id:'exam1',label:'Evaluación · 1.ª evaluación',description:'Modelos similares a los exámenes de evaluación: cálculo, sistemas, problemas, trigonometría y geometría, agrupados por temas. Simulacro completo: 75 minutos y 10 puntos.'},
+ {id:'recovery1',label:'Recuperación · 1.ª evaluación',description:'Modelos similares a las recuperaciones: ecuaciones y sistemas, problemas de sistemas y trigonometría, puntos y vectores, ángulos y distancias. Simulacro completo: 75 minutos y 10 puntos.'},
  {id:'follow2',label:'Seguimiento · 2.ª evaluación',topics:['functions','absoluteFunction','quadraticProfit','continuity','continuityParam','limits'],description:'Formato de funciones, continuidad, límites y problemas. Los exámenes de distintos años incluyen combinaciones diferentes.'},
  {id:'class2',label:'Nota de clase · 2.ª evaluación',topics:['derivatives'],description:'Prueba breve de derivación: regla de la cadena, productos, cocientes y funciones compuestas.'},
  {id:'exam2',label:'Evaluación · 2.ª evaluación',topics:['derivatives','limits','asymptotes','asymptoteParam','continuity','study','optimization'],description:'Formato de derivadas, límites, asíntotas y continuidad, con variantes de estudio de funciones y optimización.'},
@@ -126,7 +126,7 @@ const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
  if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem']:['trigProblem','trigEquation'];
- if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigProblem","trigEquation","points","lines","angleDistance"];
+ if(isFirstAssessment()) return firstAssessmentTopics;
  return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
@@ -186,13 +186,13 @@ function drawTopics(){
  const topicGroups={algebra:'Álgebra',systems:'Sistemas de ecuaciones',inequalities:'Inecuaciones',trigonometry:'Trigonometría',geometry:'Geometría analítica'};
  let previousGroup='';
  document.getElementById('controls').innerHTML=typesFor().map(type=>{
-  const group=activeFormat==='exam1'?firstEvaluationGroups.find(g=>g.types.includes(type)):null;
+  const group=isFirstAssessment()?firstEvaluationGroups.find(g=>g.types.includes(type)):null;
   const heading=group&&group.id!==previousGroup?'<h3 class="group-title">'+topicGroups[group.id]+'</h3>':'';
   if(group)previousGroup=group.id;
-  if(!(type in state.chosen))state.chosen[type]=!practiceOnlyTopics.has(type)&&(activeFormat==='class50'||!!taught[topicInfo[type][1]]);
+  if(!(type in state.chosen))state.chosen[type]=isFirstAssessment()?firstAssessmentDefault(type):!practiceOnlyTopics.has(type)&&(activeFormat==='class50'||!!taught[topicInfo[type][1]]);
   const ok=available(type), remaining=unseenQuestions(type).length;
-  const optional=practiceOnlyTopics.has(type)||!taught[topicInfo[type][1]];
-  return heading+`<label class="opt ${optional&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(practiceOnlyTopics.has(type)?'Opcional · recuperación':!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
+  const optional=isFirstAssessment()?type==='angleDistance'&&activeFormat==='exam1':practiceOnlyTopics.has(type)||!taught[topicInfo[type][1]];
+  return heading+`<label class="opt ${optional&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(isFirstAssessment()?(optional?'Opcional · recuperación':remaining+' sin repetir'):practiceOnlyTopics.has(type)?'Opcional · recuperación':!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
  }).join('');
  document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&(practiceOnlyTopics.has(el.dataset.topic)||!taught[topicInfo[el.dataset.topic][1]]));updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
  updateTime();
@@ -218,11 +218,7 @@ function templates(){
   if(classUnit==='systems')return [{title:'Resuelve los siguientes sistemas.',types:['linear3','nonlinear'],points:4},{title:'Plantea y resuelve los siguientes problemas.',types:['linearProblem','linearProblem'],points:6}];
   return [{title:'Resuelve el problema de trigonometría.',types:['trigProblem'],points:4},{title:'Resuelve el problema de trigonometría.',types:['trigProblem'],points:4},{title:'Resuelve la ecuación trigonométrica (solución general en grados).',types:['trigEquation'],points:2}];
  }
- if(activeFormat==='exam1')return choice([
-  [{title:'Resuelve las ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic']),choice(['inequality','rationalInequality']),'inequalitySystem1','inequalitySystem2'],points:4},{title:'Plantea y resuelve el problema de sistemas de ecuaciones.',types:['linearProblem'],points:2},{title:'Plantea y resuelve el problema de inecuaciones.',types:['inequalityProblem'],points:2},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:2}],
-  [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.25}],
-  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas y posiciones relativas.',types:['lines'],points:2}]
- ]);
+
  return choice([
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3','exponential','logarithmic','rational'],points:5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:3},{title:'Clasifica los sistemas.',types:['classification'],points:2}],
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['rational','exponential','radical','nonlinear','linear3','absolute'],points:7.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:2.5}],
@@ -238,7 +234,7 @@ const firstEvaluationGroups=[
  {id:'geometry',title:'Geometría analítica. Resuelve los siguientes ejercicios.',types:['points','lines','angleDistance']}
 ];
 function groupFirstEvaluation(plan){
- const all=plan.flatMap(block=>block.questions.map(q=>({...q,examWeight:block.points/block.fullCount})));
+ const all=plan.flatMap(block=>block.questions.map(q=>({...q,examWeight:q.examWeight??block.points/block.fullCount})));
  const grouped=firstEvaluationGroups.map(group=>{
   const questions=all.filter(q=>group.types.includes(q.type)).sort((a,b)=>group.types.indexOf(a.type)-group.types.indexOf(b.type));
   return {theme:group.id,title:group.title,questions,types:questions.map(q=>q.type),points:questions.reduce((sum,q)=>sum+q.examWeight,0),fullCount:questions.length};
@@ -258,6 +254,7 @@ function allocateQuestionScores(block){
 }
 
 function makePlan(draw=false){
+ if(isFirstAssessment())return makeFirstAssessmentPlan(draw);
  const state=currentMemory();const selectedSet=new Set(enabledTopics());
  const plan=templates().map(block=>({...block,types:block.types.filter(t=>selectedSet.has(t)),fullCount:block.types.length})).filter(b=>b.types.length);
  const seen=new Set(plan.flatMap(b=>b.types));
@@ -346,7 +343,7 @@ function regionSolution(q){
  svg+='</g><text x="570" y="370">x</text><text x="23" y="20">y</text></svg>';
  return (svg+'<p class="graph-key">Azul: solución · Continua: frontera incluida · Discontinua: excluida.</p><p>Vértices de la frontera: '+v.vertices.map(p=>M('('+p.point.map(s=>s.includes('/')?'\\frac{'+s.split('/')[0]+'}{'+s.split('/')[1]+'}':s).join(',')+')')+' '+(p.included?'incluido':'excluido')).join('; ')+'.</p>').replace('Vértices de la frontera: .','La región no tiene vértices.');
 }
-function updateTime(){const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';}
+function updateTime(){if(isFirstAssessment()){const plan=makeFirstAssessmentPlan(false);const minutes=plan.length?Math.max(5,Math.round(75*plan.reduce((n,b)=>n+b.points,0)/10)):0;document.getElementById('duration').innerHTML='Tiempo orientativo: <strong>'+minutes+' min</strong><small>El simulacro completo dura 75 min. Al quitar contenidos, el tiempo se reduce.</small>';return;}const types=enabledTopics();document.getElementById('duration').innerHTML='Tiempo estimado: <strong>'+types.reduce((sum,t)=>sum+banks[t][0].minutes,0)+' min</strong><small>Máximo según la selección; el modelo puede incluir menos apartados.</small>';}
 function mathTypeset(){
  if(window.MathJax?.typesetPromise) {
   const nodes=[document.getElementById('exam'),document.getElementById('solutions')];
@@ -363,7 +360,7 @@ function displayPaper(paper){
  document.getElementById('summary-time').textContent=paper.time+' min';
  const personal=document.querySelector('.site-cc img').src, logo=document.getElementById('brand-logo').src;
  const date=new Intl.DateTimeFormat('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date());
- let h=`<div class="paper-brand"><div class="print-logos"><img src="${logo}" alt="Colegio Punta Galea"><img class="personal-print" src="${personal}" alt="Maite · Matemáticas"></div><span>MATEMÁTICAS · 1.º BACHILLERATO<br>${esc(titleCase[activeFormat])}</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>${activeFormat.startsWith('class')?'SIMULACRO · NOTA DE CLASE':activeFormat.startsWith('exam')?'SIMULACRO DE EVALUACIÓN':'SIMULACRO DE SEGUIMIENTO'}</h2><div class="sub">${paper.time} minutos aprox. · 10 puntos${paper.reviewTime?' · '+paper.reviewTime+' min para revisión':''}</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: ${date}</span></div>`;
+ let h=`<div class="paper-brand"><div class="print-logos"><img src="${logo}" alt="Colegio Punta Galea"><img class="personal-print" src="${personal}" alt="Maite · Matemáticas"></div><span>MATEMÁTICAS · 1.º BACHILLERATO<br>${esc(titleCase[activeFormat])}</span></div><header class="exam-top"><div class="eyebrow">Generador de simulacros</div><h2>${activeFormat==='recovery1'?'SIMULACRO DE RECUPERACIÓN':activeFormat.startsWith('class')?'SIMULACRO · NOTA DE CLASE':activeFormat.startsWith('exam')?'SIMULACRO DE EVALUACIÓN':'SIMULACRO DE SEGUIMIENTO'}</h2><div class="sub">${paper.time} minutos aprox. · 10 puntos${paper.reviewTime?' · '+paper.reviewTime+' min para revisión':''}</div></header><div class="exam-meta"><span>Nombre y apellidos: __________________________________</span><span>Fecha: ${date}</span></div>`;
  
  let sol='';
  paper.blocks.forEach((b,i)=>{
@@ -392,14 +389,15 @@ function createPaper(){
  const rawTotal=blocks.reduce((n,b)=>n+b.points*b.types.length/b.fullCount,0);
  let allocated=0;
  blocks.forEach((b,i)=>{b.score=i===blocks.length-1?+(10-allocated).toFixed(2):+(10*b.points*b.types.length/b.fullCount/rawTotal).toFixed(2);allocated+=b.score;});
- if(activeFormat==='exam1')blocks.forEach(b=>b.questionScores=allocateQuestionScores(b));
+ if(isFirstAssessment())blocks.forEach(b=>b.questionScores=allocateQuestionScores(b));
  const qs=blocks.flatMap(b=>b.questions);
- const paper={blocks,time:qs.reduce((n,q)=>n+q.minutes,0),serial:++serial,partial:false};
+ const paper={blocks,time:isFirstAssessment()?currentMemory().assessmentMinutes:qs.reduce((n,q)=>n+q.minutes,0),serial:++serial,partial:isFirstAssessment()?currentMemory().assessmentPartial:false};
  const state=currentMemory();state.paper=paper;displayPaper(paper);
 }
 function drawFormat(){
  const f=formats.find(f=>f.id===activeFormat);
  drawTabs();
+ const stagesPanel=document.querySelector('.taught-settings');if(stagesPanel)stagesPanel.hidden=isFirstAssessment();
  document.getElementById('generator-panel').setAttribute('aria-labelledby','tab-'+f.id);
  document.getElementById('format-title').textContent=f.label;
  document.getElementById('format-description').textContent=f.description;
@@ -417,7 +415,7 @@ function drawFormat(){
  const cu=document.getElementById('class-unit');if(cu){cu.value=classUnit;cu.onchange=()=>{classUnit=cu.value;drawFormat();};}
  document.querySelector('.config .section-head h2').textContent='Contenidos del simulacro';
  document.querySelector('.config .section-head p').textContent='Marca los contenidos que pueden entrar. Cada formato conserva su estructura; el examen de primera evaluación agrupa los ejercicios por temas.';
- document.querySelector('.planning-note').innerHTML=activeFormat==='exam1'?'Los ejercicios se eligen <b>al azar y sin repetición durante la sesión</b> y se presentan por bloques: <b>álgebra, sistemas, inecuaciones, trigonometría y geometría analítica</b>. Los bloques sin ejercicios seleccionados se omiten.':activeFormat==='class50'?'Cada modelo combina parte de los contenidos marcados y reserva tiempo para revisar. Las preguntas se eligen <b>al azar y sin repetición mientras siga abierta esta pestaña</b>. Al agotar un banco se avisa.':activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
+ document.querySelector('.planning-note').innerHTML=isFirstAssessment()?'Cada simulacro conserva una <b>combinación y reparto de puntos similares a los exámenes</b>, con pequeñas variaciones entre los contenidos marcados. Completo: <b>75 minutos y 10 puntos</b>. Los ejercicios se ordenan por temas y no se repiten durante la sesión. Al quitar contenidos se reduce el tiempo. '+(activeFormat==='exam1'?'Ángulos y distancias se añaden solo si los marcas.':'La recuperación incluye ángulos y distancias.'):activeFormat==='class50'?'Cada modelo combina parte de los contenidos marcados y reserva tiempo para revisar. Las preguntas se eligen <b>al azar y sin repetición mientras siga abierta esta pestaña</b>. Al agotar un banco se avisa.':activeFormat==='follow1'&&followModel==='original'?'Se conserva la selección y la estructura del generador actual.':'Cada nuevo simulacro elige una combinación del estilo de los exámenes de referencia. La puntuación se ajusta a los apartados incluidos hasta sumar <b>10 puntos</b>.';
  if(activeFormat==='follow1'&&followModel==='original'){
   selected={...savedLegacy.selected};legacyDraw();
   if(savedLegacy.exam){document.getElementById('exam').innerHTML=savedLegacy.exam;document.getElementById('solution-body').innerHTML=savedLegacy.solution;actual={...savedLegacy.actual};document.getElementById('coverage-side').innerHTML=savedLegacy.side;document.getElementById('summary-count').textContent=savedLegacy.count;document.getElementById('summary-time').textContent=savedLegacy.time;document.getElementById('status').textContent=savedLegacy.status;document.getElementById('solutions').hidden=true;document.getElementById('toggle-sols').textContent='Ver soluciones';}
