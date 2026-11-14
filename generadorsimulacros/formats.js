@@ -55,12 +55,37 @@ for(let k=1;k<=12;k++) {
 }
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
+
+function questionDataLines(tex){
+ const lines=[];let start=0,depth=0,environments=0;
+ for(let i=0;i<tex.length;i++){
+  const tail=tex.slice(i);
+  const begin=tail.match(/^\\begin\{[^}]+\}/),end=tail.match(/^\\end\{[^}]+\}/);
+  if(begin){environments++;i+=begin[0].length-1;continue;}
+  if(end){environments=Math.max(0,environments-1);i+=end[0].length-1;continue;}
+  if(tex[i]==='{'&&tex[i-1]!=='\\')depth++;
+  if(tex[i]==='}'&&tex[i-1]!=='\\')depth=Math.max(0,depth-1);
+  const gap=tail.match(/^(?:\\(?:qquad|quad)\b|,\s*\\ )/);
+  if(gap&&depth===0&&environments===0){lines.push(tex.slice(start,i));i+=gap[0].length-1;start=i+1;}
+ }
+ lines.push(tex.slice(start));
+ return lines.map(s=>s.trim().replace(/[;,]\s*$/,'')).filter(Boolean);
+}
+function formatExamQuestion(statement,latex){
+ const text=String(statement||'').trim();
+ const parts=text.split(/\s+(?=[a-z]\)\s)/).filter(Boolean);
+ const data=latex?questionDataLines(String(latex)).map(tex=>'<span class="question-data tex">\\['+esc(tex)+'\\]</span>').join(''):'';
+ const intro=parts.filter(part=>!(/^[a-z]\)\s/.test(part))).map(part=>'<span class="question-statement">'+esc(part)+'</span>').join('');
+ const exercises=parts.filter(part=>/^[a-z]\)\s/.test(part)).map(part=>'<span class="question-part">'+esc(part)+'</span>').join('');
+ return intro+data+exercises;
+}
+
 // Catálogo de la primera evaluación: solo ejercicios contrastados con una fuente.
 const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','trigProblem','trigEquation','points','lines','angleDistance','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 for(const topic of firstEvaluationTopics)banks[topic]=[];
 for(const original of FIRST_EVALUATION_CATALOG){
  if(original.active===false)continue;
- const item={...original,originalTopic:original.topic,topic:['linearProblem','linearProblem2','nonlinearProblem'].includes(original.topic)?'linearProblem':['trigTriangle','trigHeight'].includes(original.topic)?'trigProblem':original.topic==='unitVector'?'points':original.topic,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
+ const item={...original,originalTopic:original.topic,topic:['linearProblem','linearProblem2','nonlinearProblem'].includes(original.topic)?'linearProblem':['trigTriangle','trigHeight'].includes(original.topic)?'trigProblem':original.topic==='unitVector'?'points':original.topic,q:formatExamQuestion(original.q,original.latex)};
  (banks[item.topic] ||= []).push(item);
 }
 // El formato original comparte exactamente el mismo catálogo, sin copias divergentes.
