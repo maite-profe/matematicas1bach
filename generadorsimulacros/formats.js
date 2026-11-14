@@ -56,11 +56,11 @@ for(let k=1;k<=12;k++) {
 for(const key of Object.keys(banks)){const seen=new Set();banks[key]=banks[key].filter(q=>{if(seen.has(q.q))return false;seen.add(q.q);return true;});}
 
 // Catálogo de la primera evaluación: solo ejercicios contrastados con una fuente.
-const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','trigProblem','trigEquation','points','unitVector','lines','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
+const firstEvaluationTopics=['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','trigProblem','trigEquation','points','lines','angleDistance','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 for(const topic of firstEvaluationTopics)banks[topic]=[];
 for(const original of FIRST_EVALUATION_CATALOG){
  if(original.active===false)continue;
- const item={...original,originalTopic:original.topic,topic:['linearProblem','linearProblem2','nonlinearProblem'].includes(original.topic)?'linearProblem':['trigTriangle','trigHeight'].includes(original.topic)?'trigProblem':original.topic,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
+ const item={...original,originalTopic:original.topic,topic:['linearProblem','linearProblem2','nonlinearProblem'].includes(original.topic)?'linearProblem':['trigTriangle','trigHeight'].includes(original.topic)?'trigProblem':original.topic==='unitVector'?'points':original.topic,q:(original.q?esc(original.q)+' ':'')+(original.latex?M(original.latex):'')};
  (banks[item.topic] ||= []).push(item);
 }
 // El formato original comparte exactamente el mismo catálogo, sin copias divergentes.
@@ -99,9 +99,10 @@ function sourceCaption(q){
  return '<p class="source-caption">Fuente: '+esc(q.source.document)+' · pág. '+q.source.page+' · ejercicio '+esc(q.source.exercise)+'</p>';
 }
 
+const practiceOnlyTopics=new Set(['angleDistance']);
 const topicInfo={
   inequality:['Inecuaciones','inequalities'],inequalitySystem1:['Sistemas de inecuaciones con una incógnita','inequalities'],inequalitySystem2:['Sistemas de inecuaciones con dos incógnitas','inequalities'],rationalInequality:['Inecuaciones con fracciones algebraicas','inequalities'],inequalityProblem:['Problemas de inecuaciones','inequalities'],
-  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas de ecuaciones','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigProblem:['Problemas de trigonometría','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],unitVector:['Vectores unitarios perpendiculares','geometry'],lines:['Rectas, ángulos y distancias','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
+  polynomial:['Ecuaciones polinómicas','algebra'],bicuadratic:['Bicuadradas','algebra'],rational:['Ecuaciones racionales','algebra'],radical:['Ecuaciones con radicales','algebra'],exponential:['Ecuaciones exponenciales','algebra'],logarithmic:['Ecuaciones logarítmicas','algebra'],linear3:['Sistemas de tres ecuaciones y tres incógnitas','systems'],nonlinear:['Sistemas no lineales','systems'],linearProblem:['Problemas de sistemas de ecuaciones','systems'],classification:['Clasificación de sistemas','systems'],absolute:['Valor absoluto','algebra'],intervals:['Intervalos','algebra'],trigProblem:['Problemas de trigonometría','trigonometry'],trigEquation:['Ecuaciones trigonométricas','trigonometry'],points:['Puntos y vectores','geometry'],lines:['Rectas y posiciones relativas','geometry'],angleDistance:['Ángulos y distancias · práctica de recuperación','geometry'],functions:['Funciones y representación','functions'],absoluteFunction:['Valor absoluto: función a trozos','functions'],quadraticProfit:['Beneficio máximo: función cuadrática','functions'],continuityParam:['Continuidad con parámetros','analysis'],asymptoteParam:['Asíntota oblicua con parámetros','analysis'],highLimit:['Límites trigonométricos y logarítmicos','analysis'],continuity:['Continuidad y parámetros','analysis'],limits:['Límites','analysis'],asymptotes:['Asíntotas y posición de la gráfica','analysis'],derivatives:['Derivadas compuestas','derivatives'],study:['Estudio completo de funciones','derivatives'],optimization:['Problemas de optimización','derivatives'],integrals:['Primitivas e integrales','integrals'],area:['Áreas de recintos','integrals'],derivability:['Derivabilidad y parámetros','derivatives']
 };
 const stages={algebra:['Álgebra e intervalos',true],systems:['Sistemas de ecuaciones',true],inequalities:['Inecuaciones y sistemas de inecuaciones',true],trigonometry:['Trigonometría',false],geometry:['Vectores y rectas',false],functions:['Funciones',false],analysis:['Límites, continuidad y asíntotas',false],derivatives:['Derivadas y aplicaciones',false],integrals:['Integrales',false]};
 let taught={};
@@ -125,7 +126,7 @@ const titleCase=Object.fromEntries(formats.map(f=>[f.id,f.label]));
 const typesFor = () => {
  const current=formats.find(f=>f.id===activeFormat);if(current.topics)return current.topics;
  if(activeFormat==='class1') return classUnit==='equations'?['rational','radical','exponential','logarithmic','absolute']:classUnit==='systems'?['linear3','nonlinear','linearProblem']:['trigProblem','trigEquation'];
- if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigProblem","trigEquation","points","unitVector","lines"];
+ if(activeFormat==='exam1') return ["polynomial","bicuadratic","rational","radical","exponential","logarithmic","linear3","nonlinear","linearProblem","inequality","rationalInequality","inequalitySystem1","inequalitySystem2","inequalityProblem","trigProblem","trigEquation","points","lines","angleDistance"];
  return ['polynomial','bicuadratic','rational','radical','exponential','logarithmic','linear3','nonlinear','linearProblem','classification','absolute','intervals','inequality','inequalitySystem1','inequalitySystem2','rationalInequality','inequalityProblem'];
 };
 const memoryKey=()=>activeFormat+'-'+(activeFormat==='class1'?classUnit:followModel);
@@ -188,11 +189,12 @@ function drawTopics(){
   const group=activeFormat==='exam1'?firstEvaluationGroups.find(g=>g.types.includes(type)):null;
   const heading=group&&group.id!==previousGroup?'<h3 class="group-title">'+topicGroups[group.id]+'</h3>':'';
   if(group)previousGroup=group.id;
-  if(!(type in state.chosen))state.chosen[type]=activeFormat==='class50'||!!taught[topicInfo[type][1]];
+  if(!(type in state.chosen))state.chosen[type]=!practiceOnlyTopics.has(type)&&(activeFormat==='class50'||!!taught[topicInfo[type][1]]);
   const ok=available(type), remaining=unseenQuestions(type).length;
-  return heading+`<label class="opt ${!taught[topicInfo[type][1]]&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
+  const optional=practiceOnlyTopics.has(type)||!taught[topicInfo[type][1]];
+  return heading+`<label class="opt ${optional&&!state.chosen[type]?'optional-topic':''} ${ok?'':'upcoming'}"><input type="checkbox" data-topic="${type}" ${ok&&state.chosen[type]?'checked':''} ${ok?'':'disabled'}><span>${topicInfo[type][0]}</span><em>${ok?(practiceOnlyTopics.has(type)?'Opcional · recuperación':!taught[topicInfo[type][1]]?'Opcional · añadir':remaining+' sin repetir'):'Pendiente de material'}</em></label>`;
  }).join('');
- document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&!taught[topicInfo[el.dataset.topic][1]]);updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
+ document.querySelectorAll('[data-topic]').forEach(el=>el.onchange=()=>{state.chosen[el.dataset.topic]=el.checked;(state.forced ||= {})[el.dataset.topic]=el.checked;el.closest('label').classList.toggle('optional-topic',!el.checked&&(practiceOnlyTopics.has(el.dataset.topic)||!taught[topicInfo[el.dataset.topic][1]]));updateTime();document.getElementById('status').textContent='Selección modificada. Pulsa «Crear examen» para actualizarlo.';});
  updateTime();
 }
 function enabledTopics(){const state=currentMemory();return typesFor().filter(t=>available(t)&&state.chosen[t]);}
@@ -218,8 +220,8 @@ function templates(){
  }
  if(activeFormat==='exam1')return choice([
   [{title:'Resuelve las ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic']),choice(['inequality','rationalInequality']),'inequalitySystem1','inequalitySystem2'],points:4},{title:'Plantea y resuelve el problema de sistemas de ecuaciones.',types:['linearProblem'],points:2},{title:'Plantea y resuelve el problema de inecuaciones.',types:['inequalityProblem'],points:2},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:2}],
-  [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Vectores perpendiculares.',types:['unitVector'],points:1.25}],
-  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas, ángulos y distancias.',types:['lines'],points:2}]
+  [{title:'Puntos y vectores.',types:['points'],points:3.25},{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['exponential','logarithmic','rational','radical','polynomial','bicuadratic']),'trigEquation'],points:2.5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:1.5},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.25}],
+  [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3',choice(['logarithmic','exponential','nonlinear','rational','radical']),'trigEquation'],points:3},{title:'Plantea y resuelve el problema.',types:[choice(['linearProblem'])],points:1.75},{title:'Resuelve el problema de trigonometría.',types:[choice(['trigProblem'])],points:1.5},{title:'Puntos y vectores.',types:['points'],points:1.75},{title:'Rectas y posiciones relativas.',types:['lines'],points:2}]
  ]);
  return choice([
   [{title:'Resuelve las siguientes ecuaciones y sistemas.',types:['linear3','exponential','logarithmic','rational'],points:5},{title:'Plantea y resuelve el problema.',types:['linearProblem'],points:3},{title:'Clasifica los sistemas.',types:['classification'],points:2}],
@@ -233,7 +235,7 @@ const firstEvaluationGroups=[
  {id:'systems',title:'Sistemas de ecuaciones. Resuelve los sistemas y plantea y resuelve los problemas.',types:['classification','linear3','nonlinear','linearProblem']},
  {id:'inequalities',title:'Inecuaciones. Resuelve las inecuaciones, los sistemas y los problemas.',types:['inequality','rationalInequality','inequalitySystem1','inequalitySystem2','inequalityProblem']},
  {id:'trigonometry',title:'Trigonometría. Resuelve los siguientes ejercicios y problemas.',types:['trigProblem','trigEquation']},
- {id:'geometry',title:'Geometría analítica. Resuelve los siguientes ejercicios.',types:['points','unitVector','lines']}
+ {id:'geometry',title:'Geometría analítica. Resuelve los siguientes ejercicios.',types:['points','lines','angleDistance']}
 ];
 function groupFirstEvaluation(plan){
  const all=plan.flatMap(block=>block.questions.map(q=>({...q,examWeight:block.points/block.fullCount})));
@@ -259,7 +261,7 @@ function makePlan(draw=false){
  const state=currentMemory();const selectedSet=new Set(enabledTopics());
  const plan=templates().map(block=>({...block,types:block.types.filter(t=>selectedSet.has(t)),fullCount:block.types.length})).filter(b=>b.types.length);
  const seen=new Set(plan.flatMap(b=>b.types));
- const extra=[...selectedSet].filter(t=>(state.forced?.[t]||!taught[topicInfo[t][1]])&&!seen.has(t));
+ const extra=[...selectedSet].filter(t=>(practiceOnlyTopics.has(t)||state.forced?.[t]||!taught[topicInfo[t][1]])&&!seen.has(t));
  if(extra.length)plan.push({title:'Contenido adicional seleccionado.',types:extra,points:extra.length,fullCount:extra.length});
  // Si no queda ningún apartado del modelo, se practica la selección manual.
  if(!plan.length && selectedSet.size){const fallback=[...selectedSet];plan.push({title:'Resuelve los apartados seleccionados.',types:fallback,points:10,fullCount:fallback.length});}
