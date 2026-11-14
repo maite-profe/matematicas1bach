@@ -18,8 +18,8 @@ const firstAssessmentModels={
   {id:'recu-2025',reference:'Recuperación · 17-12-2025',slots:[assessmentSlot('trigProblem',1.5),assessmentSlot('linear3',1),assessmentSlot('logarithmic',.75,'',assessmentCalculationAlternatives),assessmentSlot('rational',.75,'',assessmentCalculationAlternatives),assessmentSlot('points',2,'triangle'),assessmentSlot('linearProblem',1.5),assessmentSlot('lines',.75,'position'),assessmentSlot('angleDistance',1.75)]}
  ]
 };
-function isFirstAssessment(format=activeFormat){return format==='exam1'||format==='recovery1';}
-function firstAssessmentDefault(type,format=activeFormat){return type!=='angleDistance'||format==='recovery1';}
+function isFirstAssessment(format=activeFormat){return format==='exam1';}
+function firstAssessmentDefault(type,format=activeFormat){return type!=='angleDistance';}
 function assessmentHasRole(q,role){
  if(!role)return true;
  if(q.examRoles?.includes(role))return true;
@@ -58,7 +58,8 @@ function assessmentPick(type,role){
  return rememberQuestion(pool[Math.floor(Math.random()*pool.length)]);
 }
 function chooseAssessmentModel(selected){
- const models=firstAssessmentModels[activeFormat],last=currentMemory().lastAssessmentModel;
+ const modelFamily=selected.has('angleDistance')?'recovery1':'exam1';
+ const models=firstAssessmentModels[modelFamily],last=currentMemory().lastAssessmentModel;
  const scored=models.map(model=>({model,coverage:model.slots.reduce((sum,s)=>sum+([s.type,...s.alternatives].some(t=>selected.has(t)&&available(t))?s.points:0),0)}));
  const max=Math.max(...scored.map(v=>v.coverage));
  let candidates=scored.filter(v=>v.coverage>=max-.75).map(v=>v.model);
@@ -68,7 +69,10 @@ function chooseAssessmentModel(selected){
 function makeFirstAssessmentPlan(draw=false){
  const state=currentMemory(),selected=new Set(enabledTopics());
  if(!selected.size){if(draw)state.assessmentMinutes=0;return [];}
- const model=draw?chooseAssessmentModel(selected):(state.previewAssessmentModel||chooseAssessmentModel(selected));
+ const recovery=selected.has('angleDistance');
+ const preview=state.previewAssessmentModel;
+ const compatiblePreview=preview&&preview.id.startsWith(recovery?'recu-':'eval-');
+ const model=draw||!compatiblePreview?chooseAssessmentModel(selected):preview;
  state.previewAssessmentModel=model;
  const blocks=[],usedTypes=new Set();let retainedPoints=0,missing=0;
  for(const slot of model.slots){
